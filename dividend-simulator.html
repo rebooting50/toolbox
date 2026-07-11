@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리부팅50 월배당 시뮬레이터</title>
+    <script src="k-sdk.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-0lzX9S9qvCHIWSHAWTLWEOAs47ch78zH0H7i88fQSpvJv3X6CqI97A96w4ozY1sY" crossorigin="anonymous"></script>
     <style>
         * {
             margin: 0;
@@ -280,7 +280,6 @@
             letter-spacing: -1px;
         }
 
-        /* 위트 있는 한마디 문구 스태일 */
         .result-comment {
             display: inline-block;
             font-size: 14px;
@@ -374,7 +373,7 @@
             transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 개선된 공유 버튼 영역 스타일 */
+        /* 공유 버튼 영역 스타일 */
         .share-actions-group {
             display: flex;
             flex-direction: column;
@@ -414,7 +413,6 @@
             color: #111827;
         }
 
-        /* 카카오톡 버튼 색상 브랜딩 고정 */
         .share-btn.kakao {
             background: #fee500;
             color: #191919;
@@ -423,7 +421,6 @@
             background: #fada0a;
         }
 
-        /* 이미지 저장 버튼 색상 */
         .share-btn.image-save {
             background: #e0f2fe;
             color: #0369a1;
@@ -599,14 +596,14 @@
     </div>
 
     <script>
-        // ✅ 중복 실행 방지 안전장치 추가 및 예외 핸들링 보강
+        // ✅ 1. 초기 렌더링 시점 안정화 장치 탑재
         try {
             if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
                 Kakao.init('6ebaddaec876611ecd045b336acfdc66'); 
                 console.log("카카오 SDK 초기화 성공:", Kakao.isInitialized());
             }
         } catch(e) {
-            console.error("카카오 SDK 초기화 에러:", e);
+            console.error("카카오 초기화 예외 로그:", e);
         }
 
         const rateSlider = document.getElementById('dividendRate');
@@ -742,7 +739,8 @@
             const totalInvested = document.getElementById('totalInvested').textContent;
             const finalAsset = document.getElementById('finalAsset').textContent;
             
-            const text = `📊 리부팅50 월배당 시뮬레이션 결과\n\n- 내 예상 배당금: ${monthlyDiv}\n- 조건: ${resultSub}\n- 총 투자 원금: ${totalInvested}\n- 최종 미래 자산: ${finalAsset}\n\n나도 직접 시뮬레이션 돌려보기 👇\n🔗 https://rebooting50.github.io/toolbox/index.html\n\n🎥 유튜브에서 50대 회사원의 리얼 재테크 채널 소식 보기:\n리부팅50 채널 주소: https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
+            const currentUrl = window.location.href;
+            const text = `📊 리부팅50 월배당 시뮬레이션 결과\n\n- 내 예상 배당금: ${monthlyDiv}\n- 조건: ${resultSub}\n- 총 투자 원금: ${totalInvested}\n- 최종 미래 자산: ${finalAsset}\n\n나도 직접 시뮬레이션 돌려보기 👇\n🔗 ${currentUrl}\n\n🎥 유튜브에서 50대 회사원의 리얼 재테크 채널 소식 보기:\n리부팅50 채널 주소: https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
             
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
@@ -759,33 +757,47 @@
             }
         }
 
-        // ✅ v2 규격 함수(Kakao.Share.sendDefault)로 완전히 개편했습니다.
+        // ✅ 2. 스마트폰 지연 로딩 타이밍 이슈 극복형 동적 공유 함수
         function shareKakao() {
-            if (typeof Kakao === 'undefined' || !Kakao.isInitialized()) {
-                alert("카카오 스크립트 키가 올바르게 설정되지 않았습니다. 일반 '텍스트 복사'나 '이미지 저장'을 이용해주세요!");
+            if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+                try {
+                    Kakao.init('6ebaddaec876611ecd045b336acfdc66');
+                } catch (e) {
+                    console.error("클릭 시점 재초기화 예외:", e);
+                }
+            }
+
+            if (typeof Kakao === 'undefined') {
+                alert("카카오 서버와 통신할 수 없습니다. 확장 프로그램(광고 차단기) 설정을 확인하거나 일반 '텍스트 복사'를 이용해주세요!");
+                return;
+            }
+            
+            if (!Kakao.isInitialized()) {
+                alert("카카오 스크립트 키 인증에 최종 실패했습니다. 디벨로퍼스 콘솔의 플랫폼 도메인 설정(www 여부 등)을 재확인해주세요.");
                 return;
             }
 
             const monthlyDiv = document.getElementById('monthlyDividend').textContent;
             const resultSub = document.getElementById('resultSub').textContent;
+            const currentUrl = window.location.href; 
 
             Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: '📈 리부팅50 월배당 시뮬레이터 결과',
                     description: `나의 미래 예상 배당금은 [ ${monthlyDiv} ] 입니다. (${resultSub})`,
-                    imageUrl: 'https://rebooting50.github.io/toolbox/index.html', 
+                    imageUrl: currentUrl, 
                     link: {
-                        mobileWebUrl: 'https://rebooting50.github.io/toolbox/index.html',
-                        webUrl: 'https://rebooting50.github.io/toolbox/index.html',
+                        mobileWebUrl: currentUrl,
+                        webUrl: currentUrl,
                     },
                 },
                 buttons: [
                     {
                         title: '나도 계산해보기',
                         link: {
-                            mobileWebUrl: 'https://rebooting50.github.io/toolbox/index.html',
-                            webUrl: 'https://rebooting50.github.io/toolbox/index.html',
+                            mobileWebUrl: currentUrl,
+                            webUrl: currentUrl,
                         },
                     },
                     {
