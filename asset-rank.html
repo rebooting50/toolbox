@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리부팅50 — 대한민국 자산 순위 판독기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: #f8fafc; /* 차분하고 세련된 슬레이트톤 배경 */
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* 헤더 — 채널 로고 */
+        .channel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .channel-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        .channel-logo-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid #4f46e5;
+        }
+
+        .channel-info {
+            flex: 1;
+        }
+
+        .channel-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .channel-name::after {
+            content: 'RANK';
+            font-size: 9px;
+            background: #4f46e5;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .channel-sub {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 1px;
+        }
+
+        .channel-arrow {
+            font-size: 20px;
+            color: #9ca3af;
+        }
+
+        /* 메인 카드 */
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+        }
+
+        .card h1 {
+            font-size: 23px;
+            font-weight: 900;
+            margin-bottom: 6px;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+
+        .card .subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+
+        /* 입력 필드 */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .input-group .hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .input-row input, .input-row select {
+            flex: 1;
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s;
+            background: #f8fafc;
+            -webkit-appearance: none;
+        }
+
+        .input-row select {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            cursor: pointer;
+        }
+
+        .input-row input:focus, .input-row select:focus {
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .input-row .unit {
+            font-size: 15px;
+            font-weight: 700;
+            color: #475569;
+            white-space: nowrap;
+            width: 50px;
+        }
+
+        /* 계산 버튼 */
+        .calc-btn {
+            width: 100%;
+            padding: 16px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 12px;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        .calc-btn:hover {
+            background: #4338ca;
+            transform: translateY(-1px);
+        }
+
+        /* 결과 영역 */
+        .result-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .result-card.show {
+            display: block;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .result-main {
+            font-size: 34px;
+            font-weight: 900;
+            color: #4f46e5;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+
+        .result-comment {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 700;
+            background: #f5f3ff;
+            color: #5b21b6;
+            padding: 8px 14px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .result-divider {
+            border: none;
+            border-top: 1.5px dashed #f1f5f9;
+            margin: 20px 0;
+        }
+
+        .result-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 15px;
+        }
+
+        .result-detail .label {
+            color: #475569;
+        }
+
+        .result-detail .value {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        /* 데이터 시각화 바 */
+        .timeline {
+            margin-top: 24px;
+        }
+
+        .timeline-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 14px;
+        }
+
+        .timeline-bar {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .timeline-bar .year {
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+            z-index: 2;
+        }
+
+        .timeline-bar .amount {
+            font-size: 13px;
+            font-weight: 800;
+            color: #4f46e5;
+            z-index: 2;
+        }
+
+        .timeline-bar .bar-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: #e0e7ff;
+            z-index: 0;
+            transition: width 1.2s cubic-bezier(0.1, 0.8, 0.3, 1);
+        }
+
+        .share-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.2s;
+        }
+
+        .share-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .video-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px;
+            background: #fdf2f8;
+            border-radius: 16px;
+            margin-top: 24px;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #fce7f3;
+        }
+
+        .video-card .play-icon {
+            width: 44px;
+            height: 44px;
+            background: #ff0000;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px 20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank" class="channel-header">
+            <img src="https://yt3.ggpht.com/h_FARWUFahuMblQIBr6cldobBEjO5TGh3--M34WuMc51dwxY63OVOaOAseOtv8GqCcbSVtYkjg=s176-c-k-c0x00ffffff-no-rj" class="channel-logo-img" alt="리부팅50">
+            <div class="channel-info">
+                <div class="channel-name">리부팅50 자산계급 연구소</div>
+                <div class="channel-sub">가계금융복지조사 데이터 연동 순위 판독기 📊</div>
+            </div>
+            <div class="channel-arrow">›</div>
+        </a>
+
+        <!-- 시뮬레이터 카드 -->
+        <div class="card">
+            <h1>대한민국 내 자산 순위 판독기</h1>
+            <p class="subtitle">내 자산 규모는 대한민국 전체와 내 연령대에서 상위 몇 %일까?</p>
+
+            <div class="input-group">
+                <label>내 연령대 선택</label>
+                <div class="input-row">
+                    <select id="ageGroup">
+                        <option value="20">20대 (사회초년생 세대)</option>
+                        <option value="30">30대 (영끌 및 결혼 세대)</option>
+                        <option value="40" selected>40대 (자녀 교육 및 시드 중추 세대)</option>
+                        <option value="50">50대 (은퇴 및 자산 황금기 세대)</option>
+                        <option value="60">60대 이상 (인생 후반전 세대)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>내 보유 자산액 (순자산 기준)</label>
+                <div class="hint">총자산(부동산+금융)에서 대출이나 빚을 뺀 실제 '내 돈' 순자산</div>
+                <div class="input-row">
+                    <input type="number" id="netWorth" value="35000">
+                    <span class="unit">만원</span>
+                </div>
+            </div>
+
+            <button class="calc-btn" onclick="calculateRank()">📊 내 자산 랭킹 탑승하기</button>
+        </div>
+
+        <!-- 결과 카드 -->
+        <div class="result-card" id="resultCard">
+            <div class="result-title">내 연령대 자산 진단 결과</div>
+            <div class="result-main" id="rankMainDisplay">—</div>
+            <div class="result-comment" id="rankCommentDisplay">—</div>
+
+            <hr class="result-divider">
+
+            <div class="result-detail">
+                <span class="label">동년배 세대 내 위치</span>
+                <span class="value" id="agePercentileDisplay">—</span>
+            </div>
+            <div class="result-detail">
+                <span class="label">대한민국 전체 가구 기준 위치</span>
+                <span class="value" id="totalPercentileDisplay">—</span>
+            </div>
+            <div class="result-detail">
+                <span class="label">내 세대 평균 순자산액</span>
+                <span class="value" id="ageAverageDisplay">—</span>
+            </div>
+
+            <!-- 시각화 영역 -->
+            <div class="timeline" id="timeline"></div>
+
+            <button class="share-btn" onclick="shareRankResult()">📋 내 순위 결과 복사해서 자랑/한탄하기</button>
+
+            <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank" class="video-card">
+                <div class="play-icon">▶</div>
+                <div class="video-info">
+                    <div class="video-title">상위 10%로 점프하는 현실적인 은퇴 설계</div>
+                    <div class="video-desc">평균의 함정에서 탈출해 진짜 알짜배기 부자로 리부팅하는 법 보기</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="footer">
+            <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank">© 리부팅50 자산통계 분석기</a>
+            <br>통계청 가계금융복지조사의 순자산 10분위수 및 평균값을 기반으로 정밀하게 추정한 사이값 데이터입니다.
+        </div>
+    </div>
+
+    <script>
+        // 통계청 데이터 기반 순자산 분위 테이블 (단위: 만원)
+        // [상위 1%, 상위 5%, 상위 10%, 상위 20%, 상위 30%, 상위 50%(중앙값), 상위 70%, 평균값]
+        const statsData = {
+            "20": { thresholds: [35000, 18000, 12000, 8000, 5500, 3000, 1500], avg: 5200 },
+            "30": { thresholds: [120000, 75000, 52000, 36000, 26000, 16000, 8500], avg: 24000 },
+            "40": { thresholds: [260000, 140000, 98000, 68000, 50000, 32000, 18000], avg: 46000 },
+            "50": { thresholds: [320000, 170000, 115000, 82000, 60000, 38000, 20000], avg: 53000 },
+            "60": { thresholds: [280000, 150000, 100000, 70000, 52000, 31000, 15000], avg: 43000 },
+            "total": { thresholds: [290000, 150000, 105000, 75000, 55000, 33000, 17000], avg: 44000 }
+        };
+
+        function estimatePercentile(worth, thresholds) {
+            const pValues = [1, 5, 10, 20, 30, 50, 70];
+            
+            if (worth >= thresholds[0]) {
+                // 상위 1% 미만 하드코어 부자 구간 추정
+                let diff = worth - thresholds[0];
+                let bonus = Math.min(0.9, diff / thresholds[0]); 
+                return (1 - bonus).toFixed(1);
+            }
+            
+            // 사이값 선형 보간 추정 알고리즘
+            for (let i = 0; i < thresholds.length - 1; i++) {
+                if (worth <= thresholds[i] && worth >= thresholds[i+1]) {
+                    let highWorth = thresholds[i];
+                    let lowWorth = thresholds[i+1];
+                    let highP = pValues[i];
+                    let lowP = pValues[i+1];
+                    
+                    let pct = highP + ((highWorth - worth) / (highWorth - lowWorth)) * (lowP - highP);
+                    return pct.toFixed(1);
+                }
+            }
+            
+            // 상위 70% 미만 구간 처리
+            let lastWorth = thresholds[thresholds.length - 1];
+            if (worth < lastWorth) {
+                let basePct = 70 + ((lastWorth - worth) / lastWorth) * 30;
+                return Math.min(99.9, basePct).toFixed(1);
+            }
+            return "50.0";
+        }
+
+        function calculateRank() {
+            const ageGroup = document.getElementById('ageGroup').value;
+            const worth = parseFloat(document.getElementById('netWorth').value) || 0;
+
+            const ageStats = statsData[ageGroup];
+            const totalStats = statsData["total"];
+
+            const agePct = parseFloat(estimatePercentile(worth, ageStats.thresholds));
+            const totalPct = parseFloat(estimatePercentile(worth, totalStats.thresholds));
+
+            // 등급 명칭 및 커스텀 코멘트 해금
+            let rankTitle = "";
+            let rankComment = "";
+            let color = "#4f46e5";
+
+            if (agePct <= 1.5) {
+                rankTitle = `👑 상위 ${agePct}% (자산 왕족)`;
+                rankComment = "👏 입이 떡 벌어지는 자산가 패밀리시군요! 동년배 생태계를 파괴하는 수준의 압도적 시드입니다. 이미 돈이 돈을 벌어다 주는 초고속 트랙 위에 계십니다.";
+                color = "#dc2626";
+            } else if (agePct <= 10) {
+                rankTitle = `💎 상위 ${agePct}% (자산 귀족)`;
+                rankComment = "🚀 대단합니다! 세대 내 탑티어 엘리트 코스를 밟고 계시네요. 무리한 과소비만 피하고 포트폴리오를 단단하게 유지하면 초고속 경제적 자유 쟁취가 가능합니다.";
+                color = "#2563eb";
+            } else if (agePct <= 35) {
+                rankTitle = `🦁 상위 ${agePct}% (상위권 우량주)`;
+                rankComment = "👍 훌륭합니다. 평균 지표를 가볍게 뚫고 상위권 궤도에 정착하셨네요. 자산 굴리기에 탄력이 붙는 시점이니 배당 성장이나 자산 배분에 집중해 보세요!";
+                color = "#10b981";
+            } else if (agePct <= 65) {
+                rankTitle = `🏃‍♂️ 상위 ${agePct}% (안정적인 대한민국 중추)`;
+                rankComment = "🧘‍♂️ 딱 동년배 세대의 튼튼한 중심부이자 허리 역할을 담당하고 계십니다! 정체기를 돌파하려면 투자 파이프라인 정비와 추가적인 시드 축적이 키포인트입니다.";
+                color = "#f59e0b";
+            } else {
+                rankTitle = `🌱 상위 ${agePct}% (성장 잠재력 만렙)`;
+                rankComment = "⚠️ 아직 눈덩이가 작아 평균선 아래에 머물러 있지만 실망은 금물! 지금부터라도 새는 지출을 통제하고 월 적립식 배당 성장의 맛을 들이면 순위는 수직 상승합니다.";
+                color = "#64748b";
+            }
+
+            // UI 렌더링
+            const mainDisplay = document.getElementById('rankMainDisplay');
+            mainDisplay.textContent = rankTitle;
+            mainDisplay.style.color = color;
+
+            document.getElementById('rankCommentDisplay').textContent = rankComment;
+            document.getElementById('agePercentileDisplay').textContent = `동나이대 상위 ${agePct}% (100명 중 ${Math.ceil(agePct)}등 수준)`;
+            document.getElementById('totalPercentileDisplay').textContent = `대한민국 전체 상위 ${totalPct}%`;
+            document.getElementById('ageAverageDisplay').textContent = (ageStats.avg / 10000).toFixed(1) + '억 원';
+
+            // 게이지 시각화 처리
+            const timelineEl = document.getElementById('timeline');
+            
+            // 백분율 역전 (상위 10%면 바 길이는 90% 차오르게 설계)
+            let myBarPct = Math.max(5, 100 - agePct);
+            let avgBarPct = Math.max(5, 100 - (ageStats.avg > worth ? 60 : 40)); // 대략적인 평균 위치
+
+            timelineEl.innerHTML = `
+                <div class="timeline-title">📊 대한민국 자산 분포 스펙트럼</div>
+                <div class="timeline-bar">
+                    <div class="bar-fill" style="width: 0%"></div>
+                    <span class="year">😎 나의 순자산 위치</span>
+                    <span class="amount">${(worth / 10000).toFixed(2)}억 원 (상위 ${agePct}%)</span>
+                </div>
+                <div class="timeline-bar">
+                    <div class="bar-fill" style="width: 0%; background: #cbd5e1;"></div>
+                    <span class="year">🏛️ 내 세대 평균 순자산</span>
+                    <span class="amount">${(ageStats.avg / 10000).toFixed(1)}억 원</span>
+                </div>
+            `;
+
+            // 애니메이션 실행
+            const card = document.getElementById('resultCard');
+            card.classList.add('show');
+
+            setTimeout(() => {
+                const bars = timelineEl.querySelectorAll('.bar-fill');
+                if(bars[0]) bars[0].style.width = myBarPct + '%';
+                if(bars[1]) bars[1].style.width = 50 + '%'; // 평균점 기준 시각화
+            }, 100);
+
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function shareRankResult() {
+            const rankTitle = document.getElementById('rankMainDisplay').textContent;
+            const ageGroupText = document.getElementById('ageGroup').options[document.getElementById('ageGroup').selectedIndex].text;
+            
+            const text = `🕵️‍♂️ 전격 [대한민국 자산 순위 판독기] 결과!\n\n내 연령대 포지션은? 📊\n- 세대 군: ${ageGroupText}\n- 자산 계급: ${rankTitle}\n- 세대 평균 자산액: ${document.getElementById('ageAverageDisplay').textContent}\n\n당신의 자산은 대한민국 상위 몇 %인지 즉시 확인해보세요! → [링크]\n\n🎥 평범한 50대 IT직장인의 찐 자산 탈출기: 리부팅50\nhttps://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => alert('결과 랭킹 텍스트가 📋 복사되었습니다! 단톡방에 공유해보세요.'));
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('결과 랭킹 텍스트가 📋 복사되었습니다! 단톡방에 공유해보세요.');
+            }
+        }
+
+        // 엔터키 연동
+        document.getElementById('netWorth').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') calculateRank();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리부팅50 월배당 시뮬레이터</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            line-height: 1.6;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* 헤더 — 채널 로고 */
+        .channel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .channel-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        .channel-logo-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid #10b981;
+        }
+
+        .channel-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .channel-info {
+            flex: 1;
+        }
+
+        .channel-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .channel-name::after {
+            content: 'LIVE';
+            font-size: 9px;
+            background: #ef4444;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .channel-sub {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 1px;
+        }
+
+        .channel-arrow {
+            font-size: 20px;
+            color: #9ca3af;
+        }
+
+        /* 메인 카드 */
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+        }
+
+        .card h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: #111827;
+            letter-spacing: -0.5px;
+        }
+
+        .card .subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 28px;
+        }
+
+        /* 입력 필드 */
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .input-group .hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .input-row input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s;
+            background: #f9fafb;
+        }
+
+        .input-row input:focus {
+            border-color: #10b981;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        }
+
+        .input-row .unit {
+            font-size: 16px;
+            font-weight: 700;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+
+        /* 슬라이더 */
+        .slider-group {
+            margin-bottom: 24px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .slider-group label span {
+            color: #10b981;
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .slider-group input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* 계산 버튼 */
+        .calc-btn {
+            width: 100%;
+            padding: 16px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 12px;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        }
+
+        .calc-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px -1px rgba(16, 185, 129, 0.3);
+        }
+
+        /* 결과 영역 */
+        .result-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .result-card.show {
+            display: block;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #6b7280;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-main {
+            font-size: 38px;
+            font-weight: 900;
+            color: #10b981;
+            margin-bottom: 4px;
+            letter-spacing: -1px;
+        }
+
+        /* 위트 있는 한마디 문구 스태일 */
+        .result-comment {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 700;
+            background: #ecfdf5;
+            color: #065f46;
+            padding: 4px 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .result-sub {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-bottom: 24px;
+        }
+
+        .result-divider {
+            border: none;
+            border-top: 1.5px dashed #f3f4f6;
+            margin: 20px 0;
+        }
+
+        .result-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 15px;
+        }
+
+        .result-detail .label {
+            color: #4b5563;
+            font-weight: 500;
+        }
+
+        .result-detail .value {
+            font-weight: 700;
+            color: #111827;
+        }
+        
+        .result-detail.highlight .value {
+            color: #2563eb;
+        }
+
+        /* 시간 시뮬레이션 타임라인 */
+        .timeline {
+            margin-top: 24px;
+        }
+
+        .timeline-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 14px;
+        }
+
+        .timeline-bar {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .timeline-bar .year {
+            font-size: 14px;
+            font-weight: 700;
+            color: #4b5563;
+            z-index: 2;
+        }
+
+        .timeline-bar .amount {
+            font-size: 15px;
+            font-weight: 800;
+            color: #10b981;
+            z-index: 2;
+        }
+
+        .timeline-bar .bar-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: #e6f4ea;
+            z-index: 0;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 공유 및 영상 카드 */
+        .share-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #4b5563;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.2s;
+        }
+
+        .share-btn:hover {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .video-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px;
+            background: #fef2f2;
+            border-radius: 16px;
+            margin-top: 24px;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #fee2e2;
+            transition: all 0.2s;
+        }
+
+        .video-card:hover {
+            background: #fde8e8;
+            transform: scale(1.01);
+        }
+
+        .video-card .play-icon {
+            width: 44px;
+            height: 44px;
+            background: #ff0000;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 6px -1px rgba(255, 0, 0, 0.2);
+        }
+
+        .video-card .video-info {
+            flex: 1;
+        }
+
+        .video-card .video-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        .video-card .video-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        /* 푸터 */
+        .footer {
+            text-align: center;
+            padding: 32px 20px;
+            font-size: 12px;
+            color: #9ca3af;
+            line-height: 1.8;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank" class="channel-header" aria-label="유튜브 채널 방문">
+            <img src="https://yt3.ggpht.com/h_FARWUFahuMblQIBr6cldobBEjO5TGh3--M34WuMc51dwxY63OVOaOAseOtv8GqCcbSVtYkjg=s176-c-k-c0x00ffffff-no-rj" class="channel-logo-img" alt="리부팅50" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="channel-logo" style="display:none;">50</div>
+            <div class="channel-info">
+                <div class="channel-name">리부팅50</div>
+                <div class="channel-sub">50대 회사원의 솔직한 은퇴준비 재테크 노하우 💸</div>
+            </div>
+            <div class="channel-arrow">›</div>
+        </a>
+
+        <div class="card">
+            <h1>월배당 시뮬레이터</h1>
+            <p class="subtitle">배당금으로 월 100만원 만들기, 난 얼마나 필요할까?</p>
+
+            <div class="input-group">
+                <label>현재 즉시 투자 금액</label>
+                <div class="hint">목돈으로 시작할 수 있는 자산 규모</div>
+                <div class="input-row">
+                    <input type="number" id="currentAmount" placeholder="5000" value="5000">
+                    <span class="unit">만원</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>매월 꾸준히 적립할 금액</label>
+                <div class="hint">월급에서 추가로 쪼개어 적립식 투자할 금액</div>
+                <div class="input-row">
+                    <input type="number" id="monthlyAdd" placeholder="50" value="50">
+                    <span class="unit">만원</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label>목표 포트폴리오 배당률 <span id="rateDisplay">5%</span></label>
+                <input type="range" id="dividendRate" min="2" max="12" step="0.5" value="5">
+            </div>
+
+            <div class="slider-group">
+                <label>꾹 참고 굴릴 투자 기간 <span id="yearDisplay">10년</span></label>
+                <input type="range" id="investYears" min="1" max="30" step="1" value="10">
+            </div>
+
+            <button class="calc-btn" onclick="calculate()">🚀 미래 배당금 계산하기</button>
+        </div>
+
+        <div class="result-card" id="resultCard">
+            <div class="result-title">나의 미래 예상 월 배당금</div>
+            <div class="result-main" id="monthlyDividend">—</div>
+            <div class="result-comment" id="resultComment">준비 완료!</div>
+            <div class="result-sub" id="resultSub">—</div>
+
+            <hr class="result-divider">
+
+            <div class="result-detail">
+                <span class="label">내가 직접 넣은 총 원금</span>
+                <span class="value" id="totalInvested">—</span>
+            </div>
+            <div class="result-detail highlight">
+                <span class="label">배당 재투자로 불어난 복리 효과</span>
+                <span class="value" id="reinvestEffect">—</span>
+            </div>
+            <div class="result-detail">
+                <span class="label">최종 모인 투자 자산 크기</span>
+                <span class="value" id="finalAsset">—</span>
+            </div>
+            <div class="result-detail">
+                <span class="label">꼬박꼬박 받는 연간 총 배당금</span>
+                <span class="value" id="yearlyDividend">—</span>
+            </div>
+
+            <hr class="result-divider">
+
+            <div class="timeline" id="timeline"></div>
+
+            <button class="share-btn" onclick="shareResult()">📋 내 시뮬레이션 결과 복사하기</button>
+
+            <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank" class="video-card">
+                <div class="play-icon">▶</div>
+                <div class="video-info">
+                    <div class="video-title">리부팅50 채널에서 리얼 스토리를 만나보세요</div>
+                    <div class="video-desc">실제 이 시스템을 만들어가는 50대 회사원의 생생한 재테크일지 정주행하기</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="footer">
+            <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank">© 리부팅50 — 50대 회사원의 솔직한 재테크</a>
+            <br>본 시뮬레이션은 월복리 계산을 기반으로 한 예시이며, 실제 투자 수익과 세금 조건에 따라 다를 수 있습니다.
+        </div>
+    </div>
+
+    <script>
+        // 슬라이더 실시간 표시
+        const rateSlider = document.getElementById('dividendRate');
+        const yearSlider = document.getElementById('investYears');
+        const rateDisplay = document.getElementById('rateDisplay');
+        const yearDisplay = document.getElementById('yearDisplay');
+
+        rateSlider.addEventListener('input', () => {
+            rateDisplay.textContent = rateSlider.value + '%';
+        });
+
+        yearSlider.addEventListener('input', () => {
+            yearDisplay.textContent = yearSlider.value + '년';
+        });
+
+        function getComment(monthlyMoney) {
+            if (monthlyMoney < 100000) return "🍗 소소한 치킨 연금 획득!";
+            if (monthlyMoney < 300000) return "📱 통신비+네플릭스 요금 걱정 끝!";
+            if (monthlyMoney < 500000) return "마트 장보기 비용 클리어! 🛒";
+            if (monthlyMoney < 1000000) return "지속 가능한 주말 여가 비용 완비! ☕";
+            if (monthlyMoney < 2000000) return "🎉 든든한 대기업 월급급 제2의 월급!";
+            return "👑 신의 영역, 완벽한 경제적 자유 달성!";
+        }
+
+        function calculate() {
+            const currentAmount = parseFloat(document.getElementById('currentAmount').value) || 0;
+            const monthlyAdd = parseFloat(document.getElementById('monthlyAdd').value) || 0;
+            const rate = parseFloat(document.getElementById('dividendRate').value) / 100;
+            const years = parseInt(document.getElementById('investYears').value);
+
+            const monthlyRate = rate / 12;
+            let asset = currentAmount * 10000; // 만원 → 원
+            const monthlyAddWon = monthlyAdd * 10000;
+
+            const yearlyData = [];
+            let totalInvested = currentAmount * 10000;
+
+            for (let month = 1; month <= years * 12; month++) {
+                const monthlyDiv = asset * monthlyRate;
+                asset += monthlyDiv + monthlyAddWon;
+                totalInvested += monthlyAddWon;
+
+                if (month % 12 === 0) {
+                    const yearNum = month / 12;
+                    const monthlyDivAtYear = asset * monthlyRate;
+                    yearlyData.push({
+                        year: yearNum,
+                        asset: asset,
+                        monthlyDiv: monthlyDivAtYear
+                    });
+                }
+            }
+
+            const finalAsset = asset;
+            const finalMonthlyDiv = finalAsset * monthlyRate;
+            const finalYearlyDiv = finalAsset * rate;
+            const reinvestEffect = finalAsset - totalInvested;
+
+            // 표시 업데이트
+            document.getElementById('monthlyDividend').textContent = formatMoney(finalMonthlyDiv) + '원 / 월';
+            document.getElementById('resultComment').textContent = getComment(finalMonthlyDiv);
+            document.getElementById('resultSub').textContent = `${years}년 동안 묵묵히 굴렸을 때 (예상 배당률 ${(rate*100).toFixed(1)}%)`;
+            document.getElementById('totalInvested').textContent = formatMoney(totalInvested) + '원';
+            document.getElementById('reinvestEffect').textContent = '+' + formatMoney(reinvestEffect) + '원';
+            document.getElementById('finalAsset').textContent = formatMoney(finalAsset) + '원';
+            document.getElementById('yearlyDividend').textContent = formatMoney(finalYearlyDiv) + '원';
+
+            // 타임라인 그리기
+            const timelineEl = document.getElementById('timeline');
+            let timelineHTML = '<div class="timeline-title">📈 연도별 자산 성장 그래프</div>';
+
+            const maxDiv = Math.max(...yearlyData.map(d => d.monthlyDiv));
+
+            const step = Math.max(1, Math.floor(yearlyData.length / 6));
+            
+            for (let i = 0; i < yearlyData.length; i += step) {
+                const d = yearlyData[i];
+                const percentage = maxDiv > 0 ? (d.monthlyDiv / maxDiv) * 100 : 0;
+                timelineHTML += `
+                    <div class="timeline-bar">
+                        <div class="bar-fill" style="width: 0%"></div>
+                        <span class="year">${d.year}년 차</span>
+                        <span class="amount">월 ${formatMoney(d.monthlyDiv)}원</span>
+                    </div>
+                `;
+            }
+
+            // 마지막 연도 보정
+            if ((yearlyData.length - 1) % step !== 0) {
+                const last = yearlyData[yearlyData.length - 1];
+                const percentage = maxDiv > 0 ? (last.monthlyDiv / maxDiv) * 100 : 0;
+                timelineHTML += `
+                    <div class="timeline-bar">
+                        <div class="bar-fill" style="width: 0%"></div>
+                        <span class="year">${last.year}년 차 (최종)</span>
+                        <span class="amount">월 ${formatMoney(last.monthlyDiv)}원</span>
+                    </div>
+                `;
+            }
+
+            timelineEl.innerHTML = timelineHTML;
+
+            // 결과 카드 띄우기
+            const resultCard = document.getElementById('resultCard');
+            resultCard.classList.add('show');
+            
+            // 게이지 바 애니메이션 효과 발동
+            setTimeout(() => {
+                const bars = timelineEl.querySelectorAll('.timeline-bar');
+                let idx = 0;
+                for (let i = 0; i < yearlyData.length; i += step) {
+                    if(bars[idx]) {
+                        const pct = maxDiv > 0 ? (yearlyData[i].monthlyDiv / maxDiv) * 100 : 0;
+                        bars[idx].querySelector('.bar-fill').style.width = pct + '%';
+                        idx++;
+                    }
+                }
+                if (bars[idx]) {
+                    const last = yearlyData[yearlyData.length - 1];
+                    const pct = maxDiv > 0 ? (last.monthlyDiv / maxDiv) * 100 : 0;
+                    bars[idx].querySelector('.bar-fill').style.width = pct + '%';
+                }
+            }, 50);
+
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function formatMoney(amount) {
+            if (amount >= 100000000) {
+                return (amount / 100000000).toFixed(1) + '억';
+            } else if (amount >= 10000) {
+                return Math.round(amount / 10000).toLocaleString() + '만';
+            } else {
+                return Math.round(amount).toLocaleString();
+            }
+        }
+
+        function shareResult() {
+            const monthlyDiv = document.getElementById('monthlyDividend').textContent;
+            const resultSub = document.getElementById('resultSub').textContent;
+            const totalInvested = document.getElementById('totalInvested').textContent;
+            const finalAsset = document.getElementById('finalAsset').textContent;
+            
+            const text = `📊 리부팅50 월배당 시뮬레이션 결과\n\n- 내 예상 배당금: ${monthlyDiv}\n- 조건: ${resultSub}\n- 총 투자 원금: ${totalInvested}\n- 최종 미래 자산: ${finalAsset}\n\n나도 직접 굴려보기 → [여기에_웹사이트_주소]\n\n🎥 채널 방문하기: 리부팅50 (50대 회사원의 재테크)\nhttps://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('결과 수치가 📋 복사되었습니다! 카톡이나 커뮤니티에 공유해보세요.');
+                });
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('결과 수치가 📋 복사되었습니다! 카톡이나 커뮤니티에 공유해보세요.');
+            }
+        }
+
+        // 엔터치면 바로 계산 작동
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') calculate();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리부팅50 — 자산배분 매운맛 성향 판독기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* 헤더 */
+        .channel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .channel-logo-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid #8b5cf6;
+        }
+
+        .channel-info {
+            flex: 1;
+        }
+
+        .channel-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .channel-name::after {
+            content: 'MBTI';
+            font-size: 9px;
+            background: #8b5cf6;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .channel-sub {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 1px;
+        }
+
+        /* 메인 카드 */
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+        }
+
+        .card h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+
+        .card .subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+
+        /* 슬라이더 그룹 */
+        .input-group {
+            margin-bottom: 22px;
+            background: #f8fafc;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .label-row label {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .label-row .percent-badge {
+            font-size: 14px;
+            font-weight: 800;
+            color: #8b5cf6;
+            background: #f5f3ff;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* 토탈 바 */
+        .total-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            margin-top: 12px;
+            font-weight: 700;
+        }
+
+        .calc-btn {
+            width: 100%;
+            padding: 16px;
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 12px;
+            box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3);
+        }
+
+        .calc-btn:hover {
+            background: #7c3aed;
+        }
+
+        /* 결과 영역 */
+        .result-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .result-card.show {
+            display: block;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .result-main {
+            font-size: 28px;
+            font-weight: 900;
+            color: #8b5cf6;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            line-height: 1.3;
+        }
+
+        .result-comment {
+            display: block;
+            font-size: 14px;
+            background: #faf5ff;
+            color: #6b21a8;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .share-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.2s;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px 20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="channel-header">
+            <img src="https://yt3.ggpht.com/h_FARWUFahuMblQIBr6cldobBEjO5TGh3--M34WuMc51dwxY63OVOaOAseOtv8GqCcbSVtYkjg=s176-c-k-c0x00ffffff-no-rj" class="channel-logo-img" alt="리부팅50">
+            <div class="channel-info">
+                <div class="channel-name">리부팅50 포트폴리오 연구소</div>
+                <div class="channel-sub">내 자산배분 비율로 알아보는 뼈 때리는 성향 판독</div>
+            </div>
+        </div>
+
+        <!-- 시뮬레이터 카드 -->
+        <div class="card">
+            <h1>자산배분 매운맛 성향 판독기</h1>
+            <p class="subtitle">슬라이더를 움직여 내 자산의 대략적인 비중을 맞춰보세요 (합계 100%)</p>
+
+            <!-- 1. 주식 -->
+            <div class="input-group">
+                <div class="label-row">
+                    <label>📈 주식 (미국주식 / 국내주식 등)</label>
+                    <span class="percent-badge" id="stockVal">40%</span>
+                </div>
+                <input type="range" id="stock" class="slider" min="0" max="100" value="40" oninput="updateSliders(this)">
+            </div>
+
+            <!-- 2. 채권 -->
+            <div class="input-group">
+                <div class="label-row">
+                    <label>📉 채권 (미국채 / 회사채 등 수면제)</label>
+                    <span class="percent-badge" id="bondVal">20%</span>
+                </div>
+                <input type="range" id="bond" class="slider" min="0" max="100" value="20" oninput="updateSliders(this)">
+            </div>
+
+            <!-- 3. 현금 -->
+            <div class="input-group">
+                <div class="label-row">
+                    <label>💵 현금 및 예적금 (살살 녹는 아이스크림)</label>
+                    <span class="percent-badge" id="cashVal">20%</span>
+                </div>
+                <input type="range" id="cash" class="slider" min="0" max="100" value="20" oninput="updateSliders(this)">
+            </div>
+
+            <!-- 4. 코인 -->
+            <div class="input-group">
+                <div class="label-row">
+                    <label>🪙 가상자산 (코인 / 도파민 추출기)</label>
+                    <span class="percent-badge" id="coinVal">10%</span>
+                </div>
+                <input type="range" id="coin" class="slider" min="0" max="100" value="10" oninput="updateSliders(this)">
+            </div>
+
+            <!-- 5. 안전자산/부동산 -->
+            <div class="input-group">
+                <div class="label-row">
+                    <label>🌋 금 · 원자재 · 부동산 (지구멸망 방공호)</label>
+                    <span class="percent-badge" id="goldVal">10%</span>
+                </div>
+                <input type="range" id="gold" class="slider" min="0" max="100" value="10" oninput="updateSliders(this)">
+            </div>
+
+            <!-- 합계 체크 -->
+            <div class="total-box" id="totalBox">
+                <span>비중 합계</span>
+                <span id="totalPercent">100%</span>
+            </div>
+
+            <button class="calc-btn" onclick="analyzePortfolio()">🕵️‍♂️ 내 투자 유전형질 판독하기</button>
+        </div>
+
+        <!-- 결과 카드 -->
+        <div class="result-card" id="resultCard">
+            <div class="result-title">투자 성향 판독 결과</div>
+            <div class="result-main" id="mbtiTitle">—</div>
+            
+            <div class="result-comment" id="mbtiComment">—</div>
+
+            <button class="share-btn" onclick="copyMbtiResult()">📋 친구 단톡방에 성향 공유하고 뼈 때리기</button>
+        </div>
+
+        <div class="footer">
+            <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank">© 리부팅50 자산배분 인텔리전스</a>
+        </div>
+    </div>
+
+    <script>
+        // 슬라이더 변경 시 실시간 숫자 표기 및 합계 계산
+        function updateSliders(changedSlider) {
+            document.getElementById(changedSlider.id + "Val").textContent = changedSlider.value + "%";
+            
+            const stock = parseInt(document.getElementById('stock').value);
+            const bond = parseInt(document.getElementById('bond').value);
+            const cash = parseInt(document.getElementById('cash').value);
+            const coin = parseInt(document.getElementById('coin').value);
+            const gold = parseInt(document.getElementById('gold').value);
+            
+            const total = stock + bond + cash + coin + gold;
+            const totalPercentEl = document.getElementById('totalPercent');
+            const totalBoxEl = document.getElementById('totalBox');
+            
+            totalPercentEl.textContent = total + "%";
+            
+            if (total === 100) {
+                totalBoxEl.style.background = "#e2e8f0";
+                totalBoxEl.style.color = "#1e293b";
+            } else {
+                totalBoxEl.style.background = "#fee2e2";
+                totalBoxEl.style.color = "#ef4444";
+                totalPercentEl.textContent = total + "% (100%를 맞춰주세요)";
+            }
+        }
+
+        function analyzePortfolio() {
+            const stock = parseInt(document.getElementById('stock').value);
+            const bond = parseInt(document.getElementById('bond').value);
+            const cash = parseInt(document.getElementById('cash').value);
+            const coin = parseInt(document.getElementById('coin').value);
+            const gold = parseInt(document.getElementById('gold').value);
+            
+            const total = stock + bond + cash + coin + gold;
+            
+            if (total !== 100) {
+                alert("모든 자산의 합이 정확히 100%가 되도록 슬라이더를 조정해주세요! 현재: " + total + "%");
+                return;
+            }
+
+            let title = "";
+            let comment = "";
+
+            // 조건별 성향 판독 알고리즘
+            if (coin >= 30 || (stock + coin) >= 80) {
+                title = "🔥 [심장 없는 풀악셀 야수형]";
+                comment = "매일 아침 눈뜰 때마다 도파민이 폭발하는 상남자/상여자 포트폴리오입니다. 하락장이 오면 '돈이 복사가 안 되네?'를 외치며 고통받지만, 상승장에서는 세상 누구보다 무서운 기세를 보여줍니다. 멘탈은 강철이시겠지만, 계좌의 안전을 위해 '수면제(채권)' 한 알 정도는 쟁여두는 것을 권장합니다.";
+            } else if ((cash + bond) >= 75) {
+                title = "🧘‍♂️ [법정스님 무소유 수행자형]";
+                comment = "시장의 변동성 따위는 나를 흔들 수 없다는 평화주의자입니다. 계좌가 깎이지는 않지만, 우리가 방금 계산했던 '자산 인플레이션 녹아내림 계산기'의 주 타깃입니다! 안정성은 100점이지만 돈의 실질 가치가 매달 살살 녹고 있으니, 배당주나 지수 추종 ETF 같은 '자라나는 새싹'을 심어보시는 건 어떨까요?";
+            } else if (stock >= 50 && bond >= 20 && (cash + gold) >= 10) {
+                title = "🏛️ [올웨더 마스터 (AI급 이성주의자)]";
+                comment = "투자 교과서를 통째로 삼키신 자산배분의 정석입니다. 시장이 폭락해도 방어하고, 폭등해도 소외되지 않는 가장 이상적인 황금 밸런스를 구축하셨습니다. 리부팅50 채널이 가장 지향하는 현명한 투자자의 모습입니다. 이대로 리밸런싱만 꼬박꼬박 해주시면 노후 걱정은 패스하셔도 좋습니다.";
+            } else if (stock >= 70 && coin < 10) {
+                title = "🦁 [진격의 성장주 콜렉터]";
+                comment = "자산의 대부분을 생산적인 기업에 던져 넣은 정통파 투자자입니다. 만약 이 주식들이 전부 '국내 주식'이라면 [애국가 4절 완창 프로 국장러]이고, '미국 주식'이라면 [위대한 달러 전사]입니다. 변동성을 즐기며 장기 우상향을 믿는 굳건한 뚝심이 돋보입니다.";
+            } else {
+                title = "🍕 [의식의 흐름 뷔페식 컬렉터]";
+                comment = "유튜브와 뉴스에서 좋다고 하는 자산은 일단 10%씩 다 담아본 다국적 뷔페식 계좌입니다. 쪼개져 있어서 망하지는 않지만, 어떤 자산이 왜 오르고 내리는지 직관적으로 파악하기 어려울 수 있습니다. 이제는 내 은퇴 시점에 맞춰 주력 무기를 고르고 포트폴리오를 다이어트할 타이밍입니다.";
+            }
+
+            // UI 렌더링
+            document.getElementById('mbtiTitle').textContent = title;
+            document.getElementById('mbtiComment').textContent = comment;
+
+            const card = document.getElementById('resultCard');
+            card.classList.add('show');
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function copyMbtiResult() {
+            const title = document.getElementById('mbtiTitle').textContent;
+            const stock = document.getElementById('stock').value;
+            const bond = document.getElementById('bond').value;
+            const cash = document.getElementById('cash').value;
+            const coin = document.getElementById('coin').value;
+            const gold = document.getElementById('gold').value;
+
+            const text = `🕵️‍♂️ [리부팅50] 자산배분 성향 판독 결과!\n\n나의 투자 유전자는? → ${title}\n\n📊 나의 포트폴리오 비율\n- 주식: ${stock}%\n- 채권: ${bond}%\n- 현금: ${cash}%\n- 코인: ${coin}%\n- 안전/부동산: ${gold}%\n\n당신의 투자 MBTI는 무엇인가요? 지금 바로 판독해보세요!`;
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => alert('결과 텍스트가 📋 복사되었습니다!'));
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('결과 텍스트가 📋 복사되었습니다!');
+            }
+        }
+    </script>
+</body>
+</html>
