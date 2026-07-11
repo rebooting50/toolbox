@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리부팅50 월배당 시뮬레이터</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -34,7 +36,6 @@
             border-radius: 16px;
             margin-bottom: 16px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            cursor: pointer;
             text-decoration: none;
             color: inherit;
             transition: all 0.2s ease;
@@ -373,7 +374,24 @@
             transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 공유 및 영상 카드 */
+        /* 개선된 공유 버튼 영역 스타일 */
+        .share-actions-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-row .share-btn {
+            margin-top: 0;
+            flex: 1;
+        }
+
         .share-btn {
             width: 100%;
             display: inline-flex;
@@ -381,20 +399,37 @@
             justify-content: center;
             gap: 8px;
             padding: 14px;
-            background: #f3f4f6;
             border: none;
             border-radius: 12px;
             font-size: 14px;
             font-weight: 700;
-            color: #4b5563;
             cursor: pointer;
-            margin-top: 16px;
             transition: all 0.2s;
+            background: #f3f4f6;
+            color: #4b5563;
         }
 
         .share-btn:hover {
             background: #e5e7eb;
             color: #111827;
+        }
+
+        /* 카카오톡 버튼 색상 브랜딩 고정 */
+        .share-btn.kakao {
+            background: #fee500;
+            color: #191919;
+        }
+        .share-btn.kakao:hover {
+            background: #fada0a;
+        }
+
+        /* 이미지 저장 버튼 색상 */
+        .share-btn.image-save {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        .share-btn.image-save:hover {
+            background: #bae6fd;
         }
 
         .video-card {
@@ -510,35 +545,43 @@
         </div>
 
         <div class="result-card" id="resultCard">
-            <div class="result-title">나의 미래 예상 월 배당금</div>
-            <div class="result-main" id="monthlyDividend">—</div>
-            <div class="result-comment" id="resultComment">준비 완료!</div>
-            <div class="result-sub" id="resultSub">—</div>
+            <div id="captureArea" style="background: white; border-radius: 24px;">
+                <div class="result-title">나의 미래 예상 월 배당금</div>
+                <div class="result-main" id="monthlyDividend">—</div>
+                <div class="result-comment" id="resultComment">준비 완료!</div>
+                <div class="result-sub" id="resultSub">—</div>
 
-            <hr class="result-divider">
+                <hr class="result-divider">
 
-            <div class="result-detail">
-                <span class="label">내가 직접 넣은 총 원금</span>
-                <span class="value" id="totalInvested">—</span>
+                <div class="result-detail">
+                    <span class="label">내가 직접 넣은 총 원금</span>
+                    <span class="value" id="totalInvested">—</span>
+                </div>
+                <div class="result-detail highlight">
+                    <span class="label">배당 재투자로 불어난 복리 효과</span>
+                    <span class="value" id="reinvestEffect">—</span>
+                </div>
+                <div class="result-detail">
+                    <span class="label">최종 모인 투자 자산 크기</span>
+                    <span class="value" id="finalAsset">—</span>
+                </div>
+                <div class="result-detail">
+                    <span class="label">꼬박꼬박 받는 연간 총 배당금</span>
+                    <span class="value" id="yearlyDividend">—</span>
+                </div>
+
+                <hr class="result-divider">
+
+                <div class="timeline" id="timeline"></div>
             </div>
-            <div class="result-detail highlight">
-                <span class="label">배당 재투자로 불어난 복리 효과</span>
-                <span class="value" id="reinvestEffect">—</span>
-            </div>
-            <div class="result-detail">
-                <span class="label">최종 모인 투자 자산 크기</span>
-                <span class="value" id="finalAsset">—</span>
-            </div>
-            <div class="result-detail">
-                <span class="label">꼬박꼬박 받는 연간 총 배당금</span>
-                <span class="value" id="yearlyDividend">—</span>
-            </div>
 
-            <hr class="result-divider">
-
-            <div class="timeline" id="timeline"></div>
-
-            <button class="share-btn" onclick="shareResult()">📋 내 시뮬레이션 결과 복사하기</button>
+            <div class="share-actions-group">
+                <button class="share-btn kakao" onclick="shareKakao()">💛 카카오톡으로 결과 공유하기</button>
+                <div class="action-row">
+                    <button class="share-btn" onclick="shareResult()">📋 텍스트 복사</button>
+                    <button class="share-btn image-save" onclick="saveAsImage()">📸 이미지로 저장</button>
+                </div>
+            </div>
 
             <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank" class="video-card">
                 <div class="play-icon">▶</div>
@@ -556,7 +599,14 @@
     </div>
 
     <script>
-        // 슬라이더 실시간 표시
+        // 초기화: 카카오 개발자 콘솔에서 발급받은 JavaScript 키를 여기에 입력하세요.
+        // 키가 없어도 작동하도록 예외 처리를 해두었습니다.
+        try {
+            Kakao.init('6ebaddaec876611ecd045b336acfdc66'); 
+        } catch(e) {
+            console.log("카카오 SDK 키가 아직 설정되지 않았습니다.");
+        }
+
         const rateSlider = document.getElementById('dividendRate');
         const yearSlider = document.getElementById('investYears');
         const rateDisplay = document.getElementById('rateDisplay');
@@ -575,7 +625,7 @@
             if (monthlyMoney < 300000) return "📱 통신비+네플릭스 요금 걱정 끝!";
             if (monthlyMoney < 500000) return "마트 장보기 비용 클리어! 🛒";
             if (monthlyMoney < 1000000) return "지속 가능한 주말 여가 비용 완비! ☕";
-            if (monthlyMoney < 2000000) return "🎉 든든한 대기업 월급급 제2의 월급!";
+            if (monthlyMoney < 2000000) return "🎉 든든한 제2의 월급 완성!";
             return "👑 신의 영역, 완벽한 경제적 자유 달성!";
         }
 
@@ -586,7 +636,7 @@
             const years = parseInt(document.getElementById('investYears').value);
 
             const monthlyRate = rate / 12;
-            let asset = currentAmount * 10000; // 만원 → 원
+            let asset = currentAmount * 10000;
             const monthlyAddWon = monthlyAdd * 10000;
 
             const yearlyData = [];
@@ -613,7 +663,6 @@
             const finalYearlyDiv = finalAsset * rate;
             const reinvestEffect = finalAsset - totalInvested;
 
-            // 표시 업데이트
             document.getElementById('monthlyDividend').textContent = formatMoney(finalMonthlyDiv) + '원 / 월';
             document.getElementById('resultComment').textContent = getComment(finalMonthlyDiv);
             document.getElementById('resultSub').textContent = `${years}년 동안 묵묵히 굴렸을 때 (예상 배당률 ${(rate*100).toFixed(1)}%)`;
@@ -622,17 +671,14 @@
             document.getElementById('finalAsset').textContent = formatMoney(finalAsset) + '원';
             document.getElementById('yearlyDividend').textContent = formatMoney(finalYearlyDiv) + '원';
 
-            // 타임라인 그리기
             const timelineEl = document.getElementById('timeline');
             let timelineHTML = '<div class="timeline-title">📈 연도별 자산 성장 그래프</div>';
 
             const maxDiv = Math.max(...yearlyData.map(d => d.monthlyDiv));
-
             const step = Math.max(1, Math.floor(yearlyData.length / 6));
             
             for (let i = 0; i < yearlyData.length; i += step) {
                 const d = yearlyData[i];
-                const percentage = maxDiv > 0 ? (d.monthlyDiv / maxDiv) * 100 : 0;
                 timelineHTML += `
                     <div class="timeline-bar">
                         <div class="bar-fill" style="width: 0%"></div>
@@ -642,10 +688,8 @@
                 `;
             }
 
-            // 마지막 연도 보정
             if ((yearlyData.length - 1) % step !== 0) {
                 const last = yearlyData[yearlyData.length - 1];
-                const percentage = maxDiv > 0 ? (last.monthlyDiv / maxDiv) * 100 : 0;
                 timelineHTML += `
                     <div class="timeline-bar">
                         <div class="bar-fill" style="width: 0%"></div>
@@ -657,11 +701,9 @@
 
             timelineEl.innerHTML = timelineHTML;
 
-            // 결과 카드 띄우기
             const resultCard = document.getElementById('resultCard');
             resultCard.classList.add('show');
             
-            // 게이지 바 애니메이션 효과 발동
             setTimeout(() => {
                 const bars = timelineEl.querySelectorAll('.timeline-bar');
                 let idx = 0;
@@ -692,17 +734,18 @@
             }
         }
 
+        // 1. 개선된 텍스트 복사 기능 (주소 및 채널명 가시화 보정)
         function shareResult() {
             const monthlyDiv = document.getElementById('monthlyDividend').textContent;
             const resultSub = document.getElementById('resultSub').textContent;
             const totalInvested = document.getElementById('totalInvested').textContent;
             const finalAsset = document.getElementById('finalAsset').textContent;
             
-            const text = `📊 리부팅50 월배당 시뮬레이션 결과\n\n- 내 예상 배당금: ${monthlyDiv}\n- 조건: ${resultSub}\n- 총 투자 원금: ${totalInvested}\n- 최종 미래 자산: ${finalAsset}\n\n나도 직접 굴려보기 → [여기에_웹사이트_주소]\n\n🎥 채널 방문하기: 리부팅50 (50대 회사원의 재테크)\nhttps://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
+            const text = `📊 리부팅50 월배당 시뮬레이션 결과\n\n- 내 예상 배당금: ${monthlyDiv}\n- 조건: ${resultSub}\n- 총 투자 원금: ${totalInvested}\n- 최종 미래 자산: ${finalAsset}\n\n나도 직접 시뮬레이션 돌려보기 👇\n🔗 https://rebooting50.github.io/toolbox/index.html\n\n🎥 유튜브에서 50대 회사원의 리얼 재테크 채널 소식 보기:\n리부팅50 채널 주소: https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
             
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
-                    alert('결과 수치가 📋 복사되었습니다! 카톡이나 커뮤니티에 공유해보세요.');
+                    alert('결과 내용과 툴박스 링크가 📋 클립보드에 복사되었습니다! 편하게 붙여넣기 해보세요.');
                 });
             } else {
                 const textarea = document.createElement('textarea');
@@ -711,11 +754,72 @@
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                alert('결과 수치가 📋 복사되었습니다! 카톡이나 커뮤니티에 공유해보세요.');
+                alert('결과 내용과 툴박스 링크가 📋 클립보드에 복사되었습니다! 편하게 붙여넣기 해보세요.');
             }
         }
 
-        // 엔터치면 바로 계산 작동
+        // 2. 카카오톡 공유 기능 연동
+        function shareKakao() {
+            if (!Kakao.isInitialized()) {
+                alert("카카오 스크립트 키가 올바르게 설정되지 않았습니다. 일반 '텍스트 복사'나 '이미지 저장'을 이용해주세요!");
+                return;
+            }
+
+            const monthlyDiv = document.getElementById('monthlyDividend').textContent;
+            const resultSub = document.getElementById('resultSub').textContent;
+
+            Kakao.Link.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: '📈 리부팅50 월배당 시뮬레이터 결과',
+                    description: `나의 미래 예상 배당금은 [ ${monthlyDiv} ] 입니다. (${resultSub})`,
+                    imageUrl: 'https://rebooting50.github.io/toolbox/index.html', // 썸네일로 보여줄 대표 이미지 주소가 있다면 교체 가능합니다.
+                    link: {
+                        mobileWebUrl: 'https://rebooting50.github.io/toolbox/index.html',
+                        webUrl: 'https://rebooting50.github.io/toolbox/index.html',
+                    },
+                },
+                buttons: [
+                    {
+                        title: '나도 계산해보기',
+                        link: {
+                            mobileWebUrl: 'https://rebooting50.github.io/toolbox/index.html',
+                            webUrl: 'https://rebooting50.github.io/toolbox/index.html',
+                        },
+                    },
+                    {
+                        title: '리부팅50 유튜브',
+                        link: {
+                            mobileWebUrl: 'https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550',
+                            webUrl: 'https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550',
+                        },
+                    },
+                ],
+            });
+        }
+
+        // 3. 결과 영역 이미지로 저장 기능 구현
+        function saveAsImage() {
+            const captureArea = document.getElementById('captureArea');
+            
+            // 깔끔한 캡처를 위한 옵션 조절
+            html2canvas(captureArea, {
+                backgroundColor: "#ffffff",
+                scale: 2, // 해상도를 2배 높여서 선명하게 만듦
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = '리부팅50_월배당_시뮬레이션_결과.png';
+                link.click();
+            }).catch(err => {
+                console.error("이미지 저장 실패:", err);
+                alert("이미지 변환 중 오류가 발생했습니다. 브라우저 보안 설정을 확인해주세요.");
+            });
+        }
+
         document.querySelectorAll('input[type="number"]').forEach(input => {
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') calculate();
