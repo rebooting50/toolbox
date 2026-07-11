@@ -757,7 +757,7 @@
             }
         }
 
-        // ✅ 2. 스마트폰 지연 로딩 타이밍 이슈 극복형 동적 공유 함수
+        // ✅ 2. 스마트폰 지연 로딩 타이밍 이슈 극복형 동적 공유 함수 (도메인 검증 우회 보완 적용)
         function shareKakao() {
             if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
                 try {
@@ -779,25 +779,30 @@
 
             const monthlyDiv = document.getElementById('monthlyDividend').textContent;
             const resultSub = document.getElementById('resultSub').textContent;
-            const currentUrl = window.location.href; 
+            
+            // 💡 [수정] 플랫폼에 등록된 순수 기본 도메인 주소로 고정하여 4019 매칭 에러 완전 해결
+            const baseDomain = "https://rebooting50.github.io"; 
+            
+            // 💡 [수정] 깨지는 currentUrl 대신 카카오에서 제공하는 기본 안내 이미지 적용 (추후 개별 이미지 URL로 교체 가능)
+            const defaultImg = "https://mud-kage.kakao.com/dn/NTgfM/btqfZptFmqM/V5AGJNs511MSzk50sDuJnK/kakaolink40_original.png";
 
             Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: '📈 리부팅50 월배당 시뮬레이터 결과',
                     description: `나의 미래 예상 배당금은 [ ${monthlyDiv} ] 입니다. (${resultSub})`,
-                    imageUrl: currentUrl, 
+                    imageUrl: defaultImg, 
                     link: {
-                        mobileWebUrl: currentUrl,
-                        webUrl: currentUrl,
+                        mobileWebUrl: baseDomain,
+                        webUrl: baseDomain,
                     },
                 },
                 buttons: [
                     {
                         title: '나도 계산해보기',
                         link: {
-                            mobileWebUrl: currentUrl,
-                            webUrl: currentUrl,
+                            mobileWebUrl: baseDomain,
+                            webUrl: baseDomain,
                         },
                     },
                     {
