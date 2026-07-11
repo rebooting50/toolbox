@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리부팅50 월배당 시뮬레이터</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-0lzX9S9qvCHIWSHAWTLWEOAs47ch78zH0H7i88fQSpvJv3X6CqI97A96w4ozY1sY" crossorigin="anonymous"></script>
     <style>
         * {
             margin: 0;
@@ -599,12 +599,14 @@
     </div>
 
     <script>
-        // 초기화: 카카오 개발자 콘솔에서 발급받은 JavaScript 키를 여기에 입력하세요.
-        // 키가 없어도 작동하도록 예외 처리를 해두었습니다.
+        // ✅ 중복 실행 방지 안전장치 추가 및 예외 핸들링 보강
         try {
-            Kakao.init('6ebaddaec876611ecd045b336acfdc66'); 
+            if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+                Kakao.init('6ebaddaec876611ecd045b336acfdc66'); 
+                console.log("카카오 SDK 초기화 성공:", Kakao.isInitialized());
+            }
         } catch(e) {
-            console.log("카카오 SDK 키가 아직 설정되지 않았습니다.");
+            console.error("카카오 SDK 초기화 에러:", e);
         }
 
         const rateSlider = document.getElementById('dividendRate');
@@ -734,7 +736,6 @@
             }
         }
 
-        // 1. 개선된 텍스트 복사 기능 (주소 및 채널명 가시화 보정)
         function shareResult() {
             const monthlyDiv = document.getElementById('monthlyDividend').textContent;
             const resultSub = document.getElementById('resultSub').textContent;
@@ -758,9 +759,9 @@
             }
         }
 
-        // 2. 카카오톡 공유 기능 연동
+        // ✅ v2 규격 함수(Kakao.Share.sendDefault)로 완전히 개편했습니다.
         function shareKakao() {
-            if (!Kakao.isInitialized()) {
+            if (typeof Kakao === 'undefined' || !Kakao.isInitialized()) {
                 alert("카카오 스크립트 키가 올바르게 설정되지 않았습니다. 일반 '텍스트 복사'나 '이미지 저장'을 이용해주세요!");
                 return;
             }
@@ -768,12 +769,12 @@
             const monthlyDiv = document.getElementById('monthlyDividend').textContent;
             const resultSub = document.getElementById('resultSub').textContent;
 
-            Kakao.Link.sendDefault({
+            Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: '📈 리부팅50 월배당 시뮬레이터 결과',
                     description: `나의 미래 예상 배당금은 [ ${monthlyDiv} ] 입니다. (${resultSub})`,
-                    imageUrl: 'https://rebooting50.github.io/toolbox/index.html', // 썸네일로 보여줄 대표 이미지 주소가 있다면 교체 가능합니다.
+                    imageUrl: 'https://rebooting50.github.io/toolbox/index.html', 
                     link: {
                         mobileWebUrl: 'https://rebooting50.github.io/toolbox/index.html',
                         webUrl: 'https://rebooting50.github.io/toolbox/index.html',
@@ -798,14 +799,12 @@
             });
         }
 
-        // 3. 결과 영역 이미지로 저장 기능 구현
         function saveAsImage() {
             const captureArea = document.getElementById('captureArea');
             
-            // 깔끔한 캡처를 위한 옵션 조절
             html2canvas(captureArea, {
                 backgroundColor: "#ffffff",
-                scale: 2, // 해상도를 2배 높여서 선명하게 만듦
+                scale: 2, 
                 logging: false,
                 useCORS: true
             }).then(canvas => {
