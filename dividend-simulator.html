@@ -779,12 +779,12 @@
             const monthlyDiv = document.getElementById('monthlyDividend').textContent;
             const resultSub = document.getElementById('resultSub').textContent;
             
-            // 등록된 내 도메인 설정 (기본 인덱스)
-            const baseDomain = "https://rebooting50.github.io/toolbox/index.html"; 
-
+            // 등록된 도메인 주소와 일치시킴
+            const baseDomain = "https://rebooting50.github.io/toolbox/dividend-simulator.html"; 
             const safeImg = "https://ssl.gstatic.com/onebox/financial/charts/common/trending_up_green_24dp.png";
 
-            Kakao.Link.sendDefault({
+            // Kakao SDK v2 (v2.7.2) 규격에 맞춘 올바른 호출 방법 (fail 키는 포함되면 에러를 유발하므로 제거합니다)
+            Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: '📈 리부팅50 월배당 시뮬레이션 결과',
@@ -804,10 +804,6 @@
                         },
                     },
                 ],
-                fail: function(error) {
-                    console.error("카카오 공유 실패 구체적 에러 로그:", error);
-                    alert("카카오톡 공유 중 오류가 발생했습니다. 개발자 도구(F12) 콘솔창에서 도메인 일치 여부 및 키 설정을 다시 한번 확인해주세요.");
-                }
             });
         }
 
