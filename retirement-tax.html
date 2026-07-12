@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리부팅50 — 정밀 퇴직소득세 계산기</title>
+    <!-- 카카오 및 이미지 저장을 위한 스크립트 추가 -->
+    <script src="k-sdk.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -81,11 +84,6 @@
             font-size: 13px;
             color: #475569;
             margin-top: 1px;
-        }
-
-        .channel-arrow {
-            font-size: 20px;
-            color: #94a3b8;
         }
 
         /* 메인 카드 */
@@ -306,6 +304,19 @@
             transition: width 1s ease-out;
         }
 
+        /* 공유 액션 버튼 그룹 스타일 통합 적용 */
+        .share-actions-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+
         .share-btn {
             width: 100%;
             display: inline-flex;
@@ -313,19 +324,36 @@
             justify-content: center;
             gap: 8px;
             padding: 14px;
-            background: #f1f5f9;
             border: none;
             border-radius: 12px;
             font-size: 14px;
             font-weight: 700;
-            color: #475569;
             cursor: pointer;
-            margin-top: 16px;
             transition: all 0.2s;
+            background: #f1f5f9;
+            color: #475569;
         }
 
         .share-btn:hover {
             background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .share-btn.kakao {
+            background: #fee500;
+            color: #191919;
+        }
+        .share-btn.kakao:hover {
+            background: #fada0a;
+        }
+
+        .share-btn.image-save {
+            background: #f8fafc;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+        .share-btn.image-save:hover {
+            background: #f1f5f9;
         }
 
         .video-card {
@@ -371,7 +399,6 @@
                 <div class="channel-name">리부팅50 자산정비소</div>
                 <div class="channel-sub">현실적인 퇴직 자산 시뮬레이션 및 세액 분석 💼</div>
             </div>
-            <div class="channel-arrow">›</div>
         </a>
 
         <!-- 시뮬레이터 카드 -->
@@ -402,35 +429,45 @@
 
         <!-- 결과 카드 -->
         <div class="result-card" id="resultCard">
-            <div class="result-title">예상 세후 실수령액</div>
-            <div class="result-main" id="netPayDisplay">— 원</div>
-            <div class="result-comment">
-                ℹ️ 퇴직소득세는 종합과세되지 않고 분리과세되므로 대출 상환이나 은퇴 시드머니 투자 계획 시 위 실수령액을 확정 재원으로 활용하시면 안전합니다.
+            <!-- html2canvas 캡처 타깃 영역 -->
+            <div id="captureArea" style="background: white; padding: 10px; border-radius: 16px;">
+                <div class="result-title">예상 세후 실수령액</div>
+                <div class="result-main" id="netPayDisplay">— 원</div>
+                <div class="result-comment">
+                    ℹ️ 퇴직소득세는 종합과세되지 않고 분리과세되므로 대출 상환이나 은퇴 시드머니 투자 계획 시 위 실수령액을 확정 재원으로 활용하시면 안전합니다.
+                </div>
+
+                <hr class="result-divider">
+
+                <div class="result-detail highlight">
+                    <span class="label">총 납부 세액 (지방소득세 10% 포함)</span>
+                    <span class="value" id="totalTaxDisplay">— 원</span>
+                </div>
+                <div class="result-detail">
+                    <span class="label">근속연수 공제금액</span>
+                    <span class="value" id="yearsDuctionDisplay">— 원</span>
+                </div>
+                <div class="result-detail">
+                    <span class="label">퇴직소득 과세표준</span>
+                    <span class="value" id="taxBaseDisplay">— 원</span>
+                </div>
+                <div class="result-detail">
+                    <span class="label">실질 실효세율</span>
+                    <span class="value" id="effectiveTaxRateDisplay">— %</span>
+                </div>
+
+                <!-- 시각화 구조 -->
+                <div class="timeline" id="timeline"></div>
             </div>
 
-            <hr class="result-divider">
-
-            <div class="result-detail highlight">
-                <span class="label">총 납부 세액 (지방소득세 10% 포함)</span>
-                <span class="value" id="totalTaxDisplay">— 원</span>
+            <!-- 3가지 공유 액션 버튼 그룹 적용 완료 -->
+            <div class="share-actions-group">
+                <button class="share-btn kakao" onclick="shareKakao()">💛 카카오톡으로 결과 공유하기</button>
+                <div class="action-row">
+                    <button class="share-btn" onclick="shareTaxResult()">📋 텍스트 복사</button>
+                    <button class="share-btn image-save" onclick="saveAsImage()">📸 이미지로 저장</button>
+                </div>
             </div>
-            <div class="result-detail">
-                <span class="label">근속연수 공제금액</span>
-                <span class="value" id="yearsDuctionDisplay">— 원</span>
-            </div>
-            <div class="result-detail">
-                <span class="label">퇴직소득 과세표준</span>
-                <span class="value" id="taxBaseDisplay">— 원</span>
-            </div>
-            <div class="result-detail">
-                <span class="label">실질 실효세율</span>
-                <span class="value" id="effectiveTaxRateDisplay">— %</span>
-            </div>
-
-            <!-- 시각화 구조 -->
-            <div class="timeline" id="timeline"></div>
-
-            <button class="share-btn" onclick="shareTaxResult()">📋 세액 계산 결과 요약 복사하기</button>
 
             <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank" class="video-card">
                 <div class="play-icon">▶</div>
@@ -448,6 +485,16 @@
     </div>
 
     <script>
+        // 카카오 SDK 초기화 처리
+        try {
+            if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+                Kakao.init('6ebaddaec876611ecd045b336acfdc66'); 
+                console.log("카카오 SDK 초기화 성공:", Kakao.isInitialized());
+            }
+        } catch(e) {
+            console.error("카카오 초기화 예외 로그:", e);
+        }
+
         // 개정 근속연수 공제 표 계산 함수
         function getServiceYearDeduction(years) {
             if (years <= 5) {
@@ -477,39 +524,27 @@
             const totalRetirement = (parseFloat(document.getElementById('totalRetirement').value) || 0) * 10000;
             const years = parseInt(document.getElementById('workingYears').value) || 1;
 
-            // 1. 근속연수 공제액 산출
             const deduction = getServiceYearDeduction(years);
 
-            // 2. 퇴직소득 과세표준 (총액 - 근속연수공제)
             let taxBase = totalRetirement - deduction;
             if (taxBase < 0) taxBase = 0;
 
-            // 3. 연분연승법 적용 계산
-            // 과세표준을 근속연수로 나눈 후 12를 곱하여 환산과세표준 산출
             const convertedTaxBase = (taxBase / years) * 12;
-
-            // 환산과세표준에 기본세율을 적용하여 환산산출세액 계산
             const convertedCalcTax = getIncomeTax(convertedTaxBase);
-
-            // 환산산출세액을 12로 나누고 근속연수를 곱하여 소득세 산출세액 확정
             const incomeTax = (convertedCalcTax / 12) * years;
 
-            // 4. 지방소득세 10% 추가
             const localTax = Math.floor(incomeTax * 0.1);
             const totalTax = Math.floor(incomeTax + localTax);
 
-            // 5. 최종 실수령액
             const netPay = totalRetirement - totalTax;
             const effectiveRate = totalRetirement > 0 ? (totalTax / totalRetirement * 100).toFixed(2) : "0.00";
 
-            // UI 바인딩
             document.getElementById('netPayDisplay').textContent = formatMoneyRaw(netPay) + ' 원';
             document.getElementById('totalTaxDisplay').textContent = formatMoneyRaw(totalTax) + ' 원';
             document.getElementById('yearsDuctionDisplay').textContent = formatMoneyRaw(deduction) + ' 원';
             document.getElementById('taxBaseDisplay').textContent = formatMoneyRaw(taxBase) + ' 원';
             document.getElementById('effectiveTaxRateDisplay').textContent = effectiveRate + ' %';
 
-            // 비중 시각화 바 구성
             const timelineEl = document.getElementById('timeline');
             const netPayPct = ((netPay / totalRetirement) * 100).toFixed(1);
             const taxPct = ((totalTax / totalRetirement) * 100).toFixed(1);
@@ -528,7 +563,6 @@
                 </div>
             `;
 
-            // 결과 오픈 애니메이션
             const card = document.getElementById('resultCard');
             card.classList.add('show');
 
@@ -545,17 +579,19 @@
             return Math.floor(amount).toLocaleString();
         }
 
+        // 1. 텍스트 복사 방식
         function shareTaxResult() {
             const total = document.getElementById('totalRetirement').value;
             const years = document.getElementById('workingYears').value;
             const netPay = document.getElementById('netPayDisplay').textContent;
             const totalTax = document.getElementById('totalTaxDisplay').textContent;
             const rate = document.getElementById('effectiveTaxRateDisplay').textContent;
+            const currentUrl = window.location.href;
 
-            const text = `📋 [리부팅50] 퇴직소득세 정밀 시뮬레이션 결과\n\n- 세전 퇴직금 총액: ${total}만 원\n- 재직 근속연수: ${years}년\n- 원천징수 세액 계: ${totalTax}\n- 최종 세후 실수령액: ${netPay}\n- 실질 실효세율: ${rate}\n\n내 퇴직금의 정밀 세후 수령액 확인하기 → [링크]\n\n🎥 50대 직장인 조기 은퇴 및 연금 포트폴리오 연구: 리부팅50\nhttps://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
+            const text = `📋 [리부팅50] 퇴직소득세 정밀 시뮬레이션 결과\n\n- 세전 퇴직금 총액: ${total}만 원\n- 재직 근속연수: ${years}년\n- 원천징수 세액 계: ${totalTax}\n- 최종 세후 실수령액: ${netPay}\n- 실질 실효세율: ${rate}\n\n내 퇴직금의 정밀 세후 수령액 확인하기 👇\n🔗 ${currentUrl}\n\n🎥 50대 직장인 은퇴 자산 포트폴리오 연구: 리부팅50`;
 
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => alert('정밀 계산서 요약본이 📋 복사되었습니다. 안전한 곳에 저장해두세요.'));
+                navigator.clipboard.writeText(text).then(() => alert('정밀 계산서 요약본이 📋 클립보드에 복사되었습니다.'));
             } else {
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -563,11 +599,57 @@
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                alert('정밀 계산서 요약본이 📋 복사되었습니다. 안전한 곳에 저장해두세요.');
+                alert('정밀 계산서 요약본이 📋 클립보드에 복사되었습니다.');
             }
         }
 
-        // 엔터키 연동
+        // 2. 카카오톡 공유
+        function shareKakao() {
+            if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+                try { Kakao.init('6ebaddaec876611ecd045b336acfdc66'); } catch (e) {}
+            }
+
+            if (typeof Kakao === 'undefined' || !Kakao.isInitialized()) {
+                alert("카카오 SDK 연동에 실패했습니다. 일반 텍스트 복사를 이용해주세요.");
+                return;
+            }
+
+            const total = document.getElementById('totalRetirement').value;
+            const netPay = document.getElementById('netPayDisplay').textContent;
+            const baseDomain = "https://rebooting50.github.io/toolbox/retirement-tax.html"; 
+            const safeImg = "https://ssl.gstatic.com/onebox/financial/charts/common/trending_up_green_24dp.png";
+
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: '💼 리부팅50 퇴직소득세 정밀 시뮬레이션',
+                    description: `세전 퇴직금 ${total}만 원 입력 결과\n예상 세후 실수령액: ${netPay}`,
+                    imageUrl: safeImg,
+                    link: { mobileWebUrl: baseDomain, webUrl: baseDomain },
+                },
+                buttons: [{ title: '나도 세액 계산하기', link: { mobileWebUrl: baseDomain, webUrl: baseDomain } }],
+            });
+        }
+
+        // 3. 이미지 저장
+        function saveAsImage() {
+            const captureArea = document.getElementById('captureArea');
+            html2canvas(captureArea, {
+                backgroundColor: "#ffffff",
+                scale: 2, 
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = '리부팅50_퇴직소득세_정밀계산_결과.png';
+                link.click();
+            }).catch(err => {
+                alert("이미지 변환 중 오류가 발생했습니다.");
+            });
+        }
+
         document.querySelectorAll('input[type="number"]').forEach(input => {
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') calculateRetirementTax();
