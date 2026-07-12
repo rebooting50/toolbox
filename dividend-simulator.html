@@ -782,12 +782,14 @@
             // 등록된 내 도메인 설정 (기본 인덱스)
             const baseDomain = "https://rebooting50.github.io/toolbox/index.html"; 
 
+            const safeImg = "https://ssl.gstatic.com/onebox/financial/charts/common/trending_up_green_24dp.png";
+
             Kakao.Link.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: '📈 리부팅50 월배당 시뮬레이션 결과',
                     description: `예상 월 배당금: ${monthlyDiv}\n(${resultSub})`,
-                    imageUrl: 'https://raw.githubusercontent.com/rebooting50/toolbox/main/1x1-ffff007f.png',
+                    imageUrl: safeImg,
                     link: {
                         mobileWebUrl: baseDomain,
                         webUrl: baseDomain,
