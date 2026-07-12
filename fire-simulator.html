@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리부팅50 — 4% 룰 기반 은퇴 시점 시뮬레이터</title>
+    <script src="k-sdk.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -361,6 +363,24 @@
             transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* 공유 버튼 영역 스타일 복사 */
+        .share-actions-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-row .share-btn {
+            margin-top: 0;
+            flex: 1;
+        }
+
         .share-btn {
             width: 100%;
             display: inline-flex;
@@ -368,19 +388,35 @@
             justify-content: center;
             gap: 8px;
             padding: 14px;
-            background: #f3f4f6;
             border: none;
             border-radius: 12px;
             font-size: 14px;
             font-weight: 700;
-            color: #4b5563;
             cursor: pointer;
-            margin-top: 16px;
             transition: all 0.2s;
+            background: #f3f4f6;
+            color: #4b5563;
         }
 
         .share-btn:hover {
             background: #e5e7eb;
+            color: #111827;
+        }
+
+        .share-btn.kakao {
+            background: #fee500;
+            color: #191919;
+        }
+        .share-btn.kakao:hover {
+            background: #fada0a;
+        }
+
+        .share-btn.image-save {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        .share-btn.image-save:hover {
+            background: #bae6fd;
         }
 
         .video-card {
@@ -419,7 +455,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- 헤더 -->
         <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank" class="channel-header">
             <img src="https://yt3.ggpht.com/h_FARWUFahuMblQIBr6cldobBEjO5TGh3--M34WuMc51dwxY63OVOaOAseOtv8GqCcbSVtYkjg=s176-c-k-c0x00ffffff-no-rj" class="channel-logo-img" alt="리부팅50">
             <div class="channel-info">
@@ -429,7 +464,6 @@
             <div class="channel-arrow">›</div>
         </a>
 
-        <!-- 시뮬레이터 카드 -->
         <div class="card">
             <h1>4% 룰 은퇴 시점 계산기</h1>
             <p class="subtitle">물가 상승률과 복리를 이기는 파이어족 생존 시뮬레이션</p>
@@ -482,30 +516,37 @@
             <button class="calc-btn" onclick="simulateFIRE()">🔥 파이어족 은퇴 시점 확인하기</button>
         </div>
 
-        <!-- 결과 카드 -->
         <div class="result-card" id="resultCard">
-            <div class="result-title">당신의 예상 은퇴 가능 시점</div>
-            <div class="result-main" id="fireAgeDisplay">—</div>
-            <div class="result-comment" id="fireComment">—</div>
+            <div id="captureArea" style="background: white; border-radius: 24px; padding: 10px;">
+                <div class="result-title">당신의 예상 은퇴 가능 시점</div>
+                <div class="result-main" id="fireAgeDisplay">—</div>
+                <div class="result-comment" id="fireComment">—</div>
 
-            <hr class="result-divider">
+                <hr class="result-divider">
 
-            <div class="result-detail">
-                <span class="label">목표 도달까지 걸리는 시간</span>
-                <span class="value" id="yearsNeeded">—</span>
+                <div class="result-detail">
+                    <span class="label">목표 도달까지 걸리는 시간</span>
+                    <span class="value" id="yearsNeeded">—</span>
+                </div>
+                <div class="result-detail highlight">
+                    <span class="label">실제 필요한 목표 은퇴 자산</span>
+                    <span class="value" id="targetAssetDisplay">—</span>
+                </div>
+                <div class="result-detail">
+                    <span class="label">은퇴 시점 나의 총 자산액</span>
+                    <span class="value" id="finalAssetDisplay">—</span>
+                </div>
+
+                <div class="timeline" id="timeline"></div>
             </div>
-            <div class="result-detail highlight">
-                <span class="label">실제 필요한 목표 은퇴 자산</span>
-                <span class="value" id="targetAssetDisplay">—</span>
-            </div>
-            <div class="result-detail">
-                <span class="label">은퇴 시점 나의 총 자산액</span>
-                <span class="value" id="finalAssetDisplay">—</span>
-            </div>
 
-            <div class="timeline" id="timeline"></div>
-
-            <button class="share-btn" onclick="shareFIRE()">📋 은퇴 시뮬레이션 결과 복사하기</button>
+            <div class="share-actions-group">
+                <button class="share-btn kakao" onclick="shareKakao()">💛 카카오톡으로 결과 공유하기</button>
+                <div class="action-row">
+                    <button class="share-btn" onclick="shareFIRE()">📋 텍스트 복사</button>
+                    <button class="share-btn image-save" onclick="saveAsImage()">📸 이미지로 저장</button>
+                </div>
+            </div>
 
             <a href="https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550" target="_blank" class="video-card">
                 <div class="play-icon">▶</div>
@@ -523,6 +564,16 @@
     </div>
 
     <script>
+        // 카카오 SDK 초기화
+        try {
+            if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+                Kakao.init('6ebaddaec876611ecd045b336acfdc66'); 
+                console.log("카카오 SDK 초기화 성공:", Kakao.isInitialized());
+            }
+        } catch(e) {
+            console.error("카카오 초기화 예외 로그:", e);
+        }
+
         // 슬라이더 바인딩
         const returnSlider = document.getElementById('annualReturn');
         const returnDisplay = document.getElementById('returnDisplay');
@@ -549,22 +600,17 @@
             const nominalReturn = (parseFloat(returnSlider.value) / 100) / 12; // 월 실목수익률
             const inflation = (parseFloat(inflationSlider.value) / 100) / 12; // 월 물가상승률
             
-            // 4% 룰에 따라 은퇴 시점에 필요한 실질 자산 = 연 생활비 * 25배
-            // 다만 미래의 생활비는 물가상승률만큼 늘어나므로, 목표 자산 역시 매달 물가상승률만큼 올라갑니다.
             let targetAsset = targetMonthlyLifestyle * 12 * 25; 
             
             let months = 0;
-            const maxMonths = 60 * 12; // 최대 60년까지 시뮬레이션
+            const maxMonths = 60 * 12; 
             
             const yearlyMilestones = [];
             
             while (asset < targetAsset && months < maxMonths) {
                 months++;
                 
-                // 자산 불리기 (수익 증가 + 월 저축액 납입)
                 asset = asset * (1 + nominalReturn) + monthlySave;
-                
-                // 물가 상승에 따른 미래 목표 자산의 상향 조정
                 targetAsset = targetAsset * (1 + inflation);
                 
                 if (months % 12 === 0) {
@@ -605,7 +651,6 @@
             const timelineEl = document.getElementById('timeline');
             let timelineHTML = '<div class="timeline-title">📊 목표치 대비 자산 충족도</div>';
             
-            // 5개 구간 샘플링
             const displayStep = Math.max(1, Math.floor(yearlyMilestones.length / 5));
             
             for (let i = 0; i < yearlyMilestones.length; i += displayStep) {
@@ -613,7 +658,6 @@
                 timelineHTML += createBarHTML(currentAge + m.year, m.current, m.target);
             }
             
-            // 최종 도달 시점 강제 추가
             if (yearlyMilestones.length > 0 && (yearlyMilestones.length - 1) % displayStep !== 0) {
                 const last = yearlyMilestones[yearlyMilestones.length - 1];
                 timelineHTML += createBarHTML(currentAge + last.year, last.current, last.target);
@@ -664,15 +708,20 @@
             }
         }
 
+        // 📋 텍스트 복사 기능 고도화
         function shareFIRE() {
             const fireAge = document.getElementById('fireAgeDisplay').textContent;
             const targetAsset = document.getElementById('targetAssetDisplay').textContent;
             const yearsNeeded = document.getElementById('yearsNeeded').textContent;
+            const finalAsset = document.getElementById('finalAssetDisplay').textContent;
+            const currentUrl = window.location.href;
             
-            const text = `🔥 4% 룰 기반 내 은퇴 시뮬레이션 결과\n\n- 내 은퇴 가능 나이: ${fireAge}\n- 준비 기간: ${yearsNeeded}\n- 물가상승률 반영 최종 필요 자산: ${targetAsset}\n\n당신의 은퇴 시점은 언제인가요? 계산해보기 → [링크]\n\n🎥 채널 배당 일지 정주행: 리부팅50\nhttps://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
+            const text = `🔥 4% 룰 기반 내 은퇴 시뮬레이션 결과\n\n- 은퇴 가능 시점: ${fireAge}\n- 준비 기간: ${yearsNeeded}\n- 최종 필요 자산(물가반영): ${targetAsset}\n- 은퇴 시점 자산 규모: ${finalAsset}\n\n나도 은퇴 시점 계산해보기 👇\n🔗 ${currentUrl}\n\n🎥 채널 배당 일지 정주행: 리부팅50`;
             
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => alert('결과가 📋 복사되었습니다! 친구들에게 공유해 보세요.'));
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('결과 내용과 링크가 📋 클립보드에 복사되었습니다!');
+                });
             } else {
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -680,8 +729,78 @@
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                alert('결과가 📋 복사되었습니다! 친구들에게 공유해 보세요.');
+                alert('결과 내용과 링크가 📋 클립보드에 복사되었습니다!');
             }
+        }
+
+        // 💛 카카오톡 공유 연동
+        function shareKakao() {
+            if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+                try {
+                    Kakao.init('6ebaddaec876611ecd045b336acfdc66');
+                } catch (e) {
+                    console.error("클릭 시점 재초기화 예외:", e);
+                }
+            }
+
+            if (typeof Kakao === 'undefined') {
+                alert("카카오 서버와 통신할 수 없습니다. 확장 프로그램 설정을 확인하거나 일반 '텍스트 복사'를 이용해주세요!");
+                return;
+            }
+            
+            if (!Kakao.isInitialized()) {
+                alert("카카오 스크립트 키 인증에 실패했습니다.");
+                return;
+            }
+
+            const fireAge = document.getElementById('fireAgeDisplay').textContent;
+            const yearsNeeded = document.getElementById('yearsNeeded').textContent;
+            
+            const baseDomain = "https://rebooting50.github.io/toolbox/fire-simulator1.html"; 
+            const safeImg = "https://ssl.gstatic.com/onebox/financial/charts/common/trending_up_green_24dp.png";
+
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: '🔥 리부팅50 파이어족 은퇴 시뮬레이션 결과',
+                    description: `은퇴 가능 시점: ${fireAge}\n(도달까지 ${yearsNeeded})`,
+                    imageUrl: safeImg,
+                    link: {
+                        mobileWebUrl: baseDomain,
+                        webUrl: baseDomain,
+                    },
+                },
+                buttons: [
+                    {
+                        title: '나도 계산해보기',
+                        link: {
+                            mobileWebUrl: baseDomain,
+                            webUrl: baseDomain,
+                        },
+                    },
+                ],
+            });
+        }
+
+        // 📸 이미지로 저장 기능 추가
+        function saveAsImage() {
+            const captureArea = document.getElementById('captureArea');
+            
+            html2canvas(captureArea, {
+                backgroundColor: "#ffffff",
+                scale: 2, 
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = '리부팅50_은퇴_시뮬레이션_결과.png';
+                link.click();
+            }).catch(err => {
+                console.error("이미지 저장 실패:", err);
+                alert("이미지 변환 중 오류가 발생했습니다. 브라우저 보안 설정을 확인해주세요.");
+            });
         }
 
         // 엔터키 연동
