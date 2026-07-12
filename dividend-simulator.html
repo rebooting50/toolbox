@@ -596,7 +596,6 @@
     </div>
 
     <script>
-        // ✅ 1. 초기 렌더링 시점 안정화 장치 탑재
         try {
             if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
                 Kakao.init('6ebaddaec876611ecd045b336acfdc66'); 
@@ -757,7 +756,7 @@
             }
         }
 
-        // ✅ 2. 스마트폰 지연 로딩 타이밍 이슈 극복형 동적 공유 함수 (도메인 검증 우회 보완 적용)
+        // ✅ 카카오 규격을 완벽하게 충족하는 feed 구조로 복구 및 깃허브 이미지 매칭 완료
         function shareKakao() {
             if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
                 try {
@@ -768,30 +767,30 @@
             }
 
             if (typeof Kakao === 'undefined') {
-                alert("카카오 서버와 통신할 수 없습니다. 확장 프로그램(광고 차단기) 설정을 확인하거나 일반 '텍스트 복사'를 이용해주세요!");
+                alert("카카오 서버와 통신할 수 없습니다. 확장 프로그램 설정을 확인하거나 일반 '텍스트 복사'를 이용해주세요!");
                 return;
             }
             
             if (!Kakao.isInitialized()) {
-                alert("카카오 스크립트 키 인증에 최종 실패했습니다. 디벨로퍼스 콘솔의 플랫폼 도메인 설정(www 여부 등)을 재확인해주세요.");
+                alert("카카오 스크립트 키 인증에 실패했습니다.");
                 return;
             }
 
             const monthlyDiv = document.getElementById('monthlyDividend').textContent;
             const resultSub = document.getElementById('resultSub').textContent;
             
-            // 💡 [수정] 플랫폼에 등록된 순수 기본 도메인 주소로 고정하여 4019 매칭 에러 완전 해결
+            // 등록된 내 도메인 설정 (기본 인덱스)
             const baseDomain = "https://rebooting50.github.io/toolbox/index.html"; 
-            
-            // 💡 [수정] 깨지는 currentUrl 대신 카카오에서 제공하는 기본 안내 이미지 적용 (추후 개별 이미지 URL로 교체 가능)
-            const defaultImg = "https://k.kakaocdn.net/14/dn/dJMcadbx0wt/syOZF0xFbm5s45yU5PGxOk/o.jpg";
+
+            // 💡 직접 올리신 깃허브의 1x1 투명 이미지 Raw 주소입니다.
+            const validTransparentImg = "https://raw.githubusercontent.com/rebooting50/toolbox/main/1x1-ffff007f.png";
 
             Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
-                    title: '📈 리부팅50 월배당 시뮬레이터 결과',
-                    description: `나의 미래 예상 배당금은 [ ${monthlyDiv} ] 입니다. (${resultSub})`,
-                    imageUrl: defaultImg, 
+                    title: '📈 리부팅50 월배당 시뮬레이션 결과',
+                    description: `예상 월 배당금: ${monthlyDiv}\n(${resultSub})`,
+                    imageUrl: validTransparentImg,
                     link: {
                         mobileWebUrl: baseDomain,
                         webUrl: baseDomain,
@@ -805,7 +804,11 @@
                             webUrl: baseDomain,
                         },
                     },
-                 ],
+                ],
+                fail: function(error) {
+                    console.error("카카오 공유 실패 구체적 에러 로그:", error);
+                    alert("카카오톡 공유 중 오류가 발생했습니다. 개발자 도구(F12) 콘솔창에서 도메인 일치 여부 및 키 설정을 다시 한번 확인해주세요.");
+                }
             });
         }
 
