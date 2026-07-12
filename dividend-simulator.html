@@ -740,7 +740,7 @@
             const finalAsset = document.getElementById('finalAsset').textContent;
             
             const currentUrl = window.location.href;
-            const text = `📊 리부팅50 월배당 시뮬레이션 결과\n\n- 내 예상 배당금: ${monthlyDiv}\n- 조건: ${resultSub}\n- 총 투자 원금: ${totalInvested}\n- 최종 미래 자산: ${finalAsset}\n\n나도 직접 시뮬레이션 돌려보기 👇\n🔗 ${currentUrl}\n\n🎥 유튜브에서 50대 회사원의 리얼 재테크 채널 소식 보기:\n리부팅50 채널 주소: https://www.youtube.com/@%EB%A6%AC%EB%B6%80%ED%8C%8550`;
+            const text = `📊 리부팅50 월배당 시뮬레이션 결과\n\n- 내 예상 배당금: ${monthlyDiv}\n- 조건: ${resultSub}\n- 총 투자 원금: ${totalInvested}\n- 최종 미래 자산: ${finalAsset}\n\n나도 직접 시뮬레이션 돌려보기 👇\n🔗 ${currentUrl}\n`;
             
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
@@ -781,10 +781,10 @@
             const resultSub = document.getElementById('resultSub').textContent;
             
             // 💡 [수정] 플랫폼에 등록된 순수 기본 도메인 주소로 고정하여 4019 매칭 에러 완전 해결
-            const baseDomain = "https://rebooting50.github.io/toolbox/dividend-simulator.html"; 
+            const baseDomain = "https://rebooting50.github.io/toolbox/index.html"; 
             
             // 💡 [수정] 깨지는 currentUrl 대신 카카오에서 제공하는 기본 안내 이미지 적용 (추후 개별 이미지 URL로 교체 가능)
-            const defaultImg = "https://k.kakaocdn.net/14/dn/dJMcah6e2LQ/cv76vPYxz26zJKu5kOkqS1/o.jpg";
+            const defaultImg = "https://k.kakaocdn.net/14/dn/dJMcadbx0wt/syOZF0xFbm5s45yU5PGxOk/o.jpg";
 
             Kakao.Share.sendDefault({
                 objectType: 'feed',
