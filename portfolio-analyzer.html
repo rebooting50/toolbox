@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리부팅50 — 자산배분 매운맛 성향 판독기</title>
+    <script src="k-sdk.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -36,6 +38,12 @@
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
             text-decoration: none;
             color: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .channel-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
 
         .channel-logo-img {
@@ -183,6 +191,7 @@
 
         .calc-btn:hover {
             background: #7c3aed;
+            transform: translateY(-1px);
         }
 
         /* 결과 영역 */
@@ -213,7 +222,7 @@
         }
 
         .result-main {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 900;
             color: #8b5cf6;
             margin-bottom: 12px;
@@ -233,6 +242,19 @@
             border-left: 4px solid #8b5cf6;
         }
 
+        /* 공유 액션 버튼 그룹 스타일 통합 */
+        .share-actions-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+
         .share-btn {
             width: 100%;
             display: inline-flex;
@@ -240,15 +262,35 @@
             justify-content: center;
             gap: 8px;
             padding: 14px;
-            background: #f1f5f9;
             border: none;
             border-radius: 12px;
             font-size: 14px;
             font-weight: 700;
-            color: #475569;
             cursor: pointer;
-            margin-top: 16px;
             transition: all 0.2s;
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .share-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .share-btn.kakao {
+            background: #fee500;
+            color: #191919;
+        }
+        .share-btn.kakao:hover {
+            background: #fada0a;
+        }
+
+        .share-btn.image-save {
+            background: #f5f3ff;
+            color: #6d28d9;
+        }
+        .share-btn.image-save:hover {
+            background: #ede9fe;
         }
 
         .footer {
@@ -257,11 +299,15 @@
             font-size: 12px;
             color: #94a3b8;
         }
+        .footer a {
+            color: #64748b;
+            text-decoration: underline;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 헤더 -->
         <div class="channel-header">
             <img src="https://yt3.ggpht.com/h_FARWUFahuMblQIBr6cldobBEjO5TGh3--M34WuMc51dwxY63OVOaOAseOtv8GqCcbSVtYkjg=s176-c-k-c0x00ffffff-no-rj" class="channel-logo-img" alt="리부팅50">
             <div class="channel-info">
@@ -270,12 +316,10 @@
             </div>
         </div>
 
-        <!-- 시뮬레이터 카드 -->
         <div class="card">
             <h1>자산배분 매운맛 성향 판독기</h1>
             <p class="subtitle">슬라이더를 움직여 내 자산의 대략적인 비중을 맞춰보세요 (합계 100%)</p>
 
-            <!-- 1. 주식 -->
             <div class="input-group">
                 <div class="label-row">
                     <label>📈 주식 (미국주식 / 국내주식 등)</label>
@@ -284,7 +328,6 @@
                 <input type="range" id="stock" class="slider" min="0" max="100" value="40" oninput="updateSliders(this)">
             </div>
 
-            <!-- 2. 채권 -->
             <div class="input-group">
                 <div class="label-row">
                     <label>📉 채권 (미국채 / 회사채 등 수면제)</label>
@@ -293,7 +336,6 @@
                 <input type="range" id="bond" class="slider" min="0" max="100" value="20" oninput="updateSliders(this)">
             </div>
 
-            <!-- 3. 현금 -->
             <div class="input-group">
                 <div class="label-row">
                     <label>💵 현금 및 예적금 (살살 녹는 아이스크림)</label>
@@ -302,7 +344,6 @@
                 <input type="range" id="cash" class="slider" min="0" max="100" value="20" oninput="updateSliders(this)">
             </div>
 
-            <!-- 4. 코인 -->
             <div class="input-group">
                 <div class="label-row">
                     <label>🪙 가상자산 (코인 / 도파민 추출기)</label>
@@ -311,7 +352,6 @@
                 <input type="range" id="coin" class="slider" min="0" max="100" value="10" oninput="updateSliders(this)">
             </div>
 
-            <!-- 5. 안전자산/부동산 -->
             <div class="input-group">
                 <div class="label-row">
                     <label>🌋 금 · 원자재 · 부동산 (지구멸망 방공호)</label>
@@ -320,7 +360,6 @@
                 <input type="range" id="gold" class="slider" min="0" max="100" value="10" oninput="updateSliders(this)">
             </div>
 
-            <!-- 합계 체크 -->
             <div class="total-box" id="totalBox">
                 <span>비중 합계</span>
                 <span id="totalPercent">100%</span>
@@ -329,14 +368,20 @@
             <button class="calc-btn" onclick="analyzePortfolio()">🕵️‍♂️ 내 투자 유전형질 판독하기</button>
         </div>
 
-        <!-- 결과 카드 -->
         <div class="result-card" id="resultCard">
-            <div class="result-title">투자 성향 판독 결과</div>
-            <div class="result-main" id="mbtiTitle">—</div>
-            
-            <div class="result-comment" id="mbtiComment">—</div>
+            <div id="captureArea" style="background: white; border-radius: 24px; padding: 10px;">
+                <div class="result-title">투자 성향 판독 결과</div>
+                <div class="result-main" id="mbtiTitle">—</div>
+                <div class="result-comment" id="mbtiComment">—</div>
+            </div>
 
-            <button class="share-btn" onclick="copyMbtiResult()">📋 친구 단톡방에 성향 공유하고 뼈 때리기</button>
+            <div class="share-actions-group">
+                <button class="share-btn kakao" onclick="shareKakao()">💛 카카오톡으로 결과 공유하기</button>
+                <div class="action-row">
+                    <button class="share-btn" onclick="copyMbtiResult()">📋 텍스트 복사</button>
+                    <button class="share-btn image-save" onclick="saveAsImage()">📸 이미지로 저장</button>
+                </div>
+            </div>
         </div>
 
         <div class="footer">
@@ -345,7 +390,16 @@
     </div>
 
     <script>
-        // 슬라이더 변경 시 실시간 숫자 표기 및 합계 계산
+        // 카카오 SDK 초기화 처리
+        try {
+            if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+                Kakao.init('6ebaddaec876611ecd045b336acfdc66'); 
+                console.log("카카오 SDK 초기화 성공:", Kakao.isInitialized());
+            }
+        } catch(e) {
+            console.error("카카오 초기화 예외 로그:", e);
+        }
+
         function updateSliders(changedSlider) {
             document.getElementById(changedSlider.id + "Val").textContent = changedSlider.value + "%";
             
@@ -388,7 +442,6 @@
             let title = "";
             let comment = "";
 
-            // 조건별 성향 판독 알고리즘
             if (coin >= 30 || (stock + coin) >= 80) {
                 title = "🔥 [심장 없는 풀악셀 야수형]";
                 comment = "매일 아침 눈뜰 때마다 도파민이 폭발하는 상남자/상여자 포트폴리오입니다. 하락장이 오면 '돈이 복사가 안 되네?'를 외치며 고통받지만, 상승장에서는 세상 누구보다 무서운 기세를 보여줍니다. 멘탈은 강철이시겠지만, 계좌의 안전을 위해 '수면제(채권)' 한 알 정도는 쟁여두는 것을 권장합니다.";
@@ -406,7 +459,6 @@
                 comment = "유튜브와 뉴스에서 좋다고 하는 자산은 일단 10%씩 다 담아본 다국적 뷔페식 계좌입니다. 쪼개져 있어서 망하지는 않지만, 어떤 자산이 왜 오르고 내리는지 직관적으로 파악하기 어려울 수 있습니다. 이제는 내 은퇴 시점에 맞춰 주력 무기를 고르고 포트폴리오를 다이어트할 타이밍입니다.";
             }
 
-            // UI 렌더링
             document.getElementById('mbtiTitle').textContent = title;
             document.getElementById('mbtiComment').textContent = comment;
 
@@ -415,6 +467,7 @@
             card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
+        // 1. 텍스트 복사 방식 고도화
         function copyMbtiResult() {
             const title = document.getElementById('mbtiTitle').textContent;
             const stock = document.getElementById('stock').value;
@@ -422,11 +475,14 @@
             const cash = document.getElementById('cash').value;
             const coin = document.getElementById('coin').value;
             const gold = document.getElementById('gold').value;
+            const currentUrl = window.location.href;
 
-            const text = `🕵️‍♂️ [리부팅50] 자산배분 성향 판독 결과!\n\n나의 투자 유전자는? → ${title}\n\n📊 나의 포트폴리오 비율\n- 주식: ${stock}%\n- 채권: ${bond}%\n- 현금: ${cash}%\n- 코인: ${coin}%\n- 안전/부동산: ${gold}%\n\n당신의 투자 MBTI는 무엇인가요? 지금 바로 판독해보세요!`;
+            const text = `🕵️‍♂️ [리부팅50] 자산배분 성향 판독 결과!\n\n나의 투자 유전자는? → ${title}\n\n📊 나의 포트폴리오 비율\n- 주식: ${stock}%\n- 채권: ${bond}%\n- 현금: ${cash}%\n- 코인: ${coin}%\n- 안전/부동산: ${gold}%\n\n나도 내 투자 MBTI 판독해보기 👇\n🔗 ${currentUrl}\n`;
 
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => alert('결과 텍스트가 📋 복사되었습니다!'));
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('결과 내용과 툴박스 링크가 📋 클립보드에 복사되었습니다! 편하게 붙여넣기 해보세요.');
+                });
             } else {
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -434,8 +490,78 @@
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                alert('결과 텍스트가 📋 복사되었습니다!');
+                alert('결과 내용과 툴박스 링크가 📋 클립보드에 복사되었습니다! 편하게 붙여넣기 해보세요.');
             }
+        }
+
+        // 2. 카카오톡 공유 피드 규격 맞춤 연동
+        function shareKakao() {
+            if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+                try {
+                    Kakao.init('6ebaddaec876611ecd045b336acfdc66');
+                } catch (e) {
+                    console.error("클릭 시점 재초기화 예외:", e);
+                }
+            }
+
+            if (typeof Kakao === 'undefined') {
+                alert("카카오 서버와 통신할 수 없습니다. 확장 프로그램 설정을 확인하거나 일반 '텍스트 복사'를 이용해주세요!");
+                return;
+            }
+            
+            if (!Kakao.isInitialized()) {
+                alert("카카오 스크립트 키 인증에 실패했습니다.");
+                return;
+            }
+
+            const title = document.getElementById('mbtiTitle').textContent;
+            
+            // 등록된 깃허브 도메인 베이스 주소 매칭
+            const baseDomain = "https://rebooting50.github.io/toolbox/portfolio-analyzer.html"; 
+            const safeImg = "https://ssl.gstatic.com/onebox/financial/charts/common/trending_up_green_24dp.png";
+
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                    title: '🕵️‍♂️ 리부팅50 자산배분 성향 판독 결과',
+                    description: `나의 투자 유전형질 결과:\n${title}`,
+                    imageUrl: safeImg,
+                    link: {
+                        mobileWebUrl: baseDomain,
+                        webUrl: baseDomain,
+                    },
+                },
+                buttons: [
+                    {
+                        title: '나도 판독해보기',
+                        link: {
+                            mobileWebUrl: baseDomain,
+                            webUrl: baseDomain,
+                        },
+                    },
+                ],
+            });
+        }
+
+        // 3. html2canvas 기반 결과 스크린샷 이미지 저장 
+        function saveAsImage() {
+            const captureArea = document.getElementById('captureArea');
+            
+            html2canvas(captureArea, {
+                backgroundColor: "#ffffff",
+                scale: 2, 
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = '리부팅50_자산배분_성향_판독_결과.png';
+                link.click();
+            }).catch(err => {
+                console.error("이미지 저장 실패:", err);
+                alert("이미지 변환 중 오류가 발생했습니다. 브라우저 보안 설정을 확인해주세요.");
+            });
         }
     </script>
 </body>
